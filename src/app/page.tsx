@@ -4,28 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Book, Library, GraduationCap, PenTool, X } from "lucide-react";
 
-// Premium Quranic Quotes List
+// Premium Quranic Quotes List - Exactly as requested
 const quranicQuotes = [
   { text: "What has deceived you concerning your Lord, the Most Generous?", ref: "Surah Al-Infitar (82:6)" },
   { text: "Has the time not come for the hearts of believers to humble themselves at the remembrance of Allah?", ref: "Surah Al-Hadid (57:16)" },
   { text: "Does man think that he will be left without purpose?", ref: "Surah Al-Qiyamah (75:36)" },
-  { text: "Did you then think that We created you without purpose and that you would never be returned to Us?", ref: "Surah Al-Mu'minun (23:115)" },
+  { text: "Did you think that We created you without purpose?", ref: "Surah Al-Mu'minun (23:115)" },
   { text: "So which of the favours of your Lord will you deny?", ref: "Surah Ar-Rahman (55:13)" },
-  { text: "Say, 'Have you considered: if your water were to become sunken into the earth, then who could bring you flowing water?'", ref: "Surah Al-Mulk (67:30)" },
-  { text: "And in yourselves. Then will you not see?", ref: "Surah Adh-Dhariyat (51:21)" },
-  { text: "Or do you think that you will enter Paradise while such [trials] have not yet come to you as came to those who passed on before you?", ref: "Surah Al-Baqarah (2:214)" },
-  { text: "Have you seen the one who has taken as his god his own desire?", ref: "Surah Al-Jathiyah (45:23)" },
-  { text: "Or were they created by nothing, or were they the creators [of themselves]?", ref: "Surah At-Tur (52:35)" },
-  { text: "Say, 'Are those who know equal to those who do not know?'", ref: "Surah Az-Zumar (39:9)" },
-  { text: "And you see the earth lifeless, but when We send down rain upon it, it stirs and swells and grows [something] of every beautiful kind.", ref: "Surah Al-Hajj (22:5)" },
-  { text: "Then is He who creates like one who does not create? So will you not be reminded?", ref: "Surah An-Nahl (16:17)" },
-  { text: "Do you order righteousness of the people and forget yourselves while you recite the Scripture? Then will you not reason?", ref: "Surah Al-Baqarah (2:44)" },
-  { text: "Or did you think that you would enter Paradise before Allah makes evident those among you who strive and makes evident those who are steadfast?", ref: "Surah Aal-Imran (3:142)" },
-  { text: "Then do they not look at the camels—how they are created?", ref: "Surah Al-Ghashiyah (88:17)" },
-  { text: "\"Am I not your Lord?\" They said, \"Yes indeed! We testify.\"", ref: "Surah Al-A'raf (7:172)" },
-  { text: "Is Allah not the most just of judges?", ref: "Surah At-Tin (95:8)" },
-  { text: "Is one who walks fallen on his face better guided, or one who walks upright on a straight path?", ref: "Surah Al-Mulk (67:22)" },
-  { text: "So where are you going?", ref: "Surah At-Takwir (81:26)" }
+  { text: "Have you considered what would happen if your water disappeared into the earth? Who could bring you flowing water?", ref: "Surah Al-Mulk (67:30)" },
+  { text: "Have you not reflected upon yourselves?", ref: "Surah Adh-Dhariyat (51:21)" },
+  { text: "Do you think you will enter Paradise without being tested?", ref: "Surah Al-Baqarah (2:214)" },
+  { text: "Were you created by nothing, or are you yourselves the creators?", ref: "Surah At-Tur (52:35)" },
+  { text: "Do you command others to do good while forgetting yourselves?", ref: "Surah Al-Baqarah (2:44)" },
+  { text: "1Do you think you will enter Paradise without Allah making evident those among you who strive and remain steadfast?", ref: "Surah Aal-Imran (3:142)" },
+  { text: "Have they not looked at the camels, how they were created?", ref: "Surah Al-Ghashiyah (88:17)" }
 ];
 
 export default function Home() {
