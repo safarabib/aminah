@@ -121,12 +121,32 @@ export default function Home() {
         <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#0a110f_100%)] z-0 opacity-80 pointer-events-none"></div>
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-24 pointer-events-none">
-          <h2 className="text-aminah-gold text-sm md:text-lg font-sans tracking-[0.4em] uppercase mb-8 opacity-90">
+        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-24">
+          
+          <h2 className="text-aminah-gold text-sm md:text-lg font-sans tracking-[0.4em] uppercase mb-10 opacity-90 pointer-events-none">
             An Institution for Quranic Knowledge
           </h2>
-          <div className="w-px h-24 bg-gradient-to-b from-transparent via-aminah-gold to-transparent mx-auto mb-10 opacity-70"></div>
-          <p className="text-3xl md:text-5xl lg:text-6xl text-aminah-ivory/95 italic font-light max-w-4xl mx-auto leading-tight drop-shadow-md">
+          
+          {/* Aesthetic Switch Button */}
+          <div className="flex justify-center mb-10">
+            <Link 
+              href="https://proggamoyquran.com/" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative inline-flex items-center gap-4 px-6 py-3 bg-[#111c19]/50 backdrop-blur-sm border border-aminah-gold/30 hover:border-aminah-gold transition-all duration-500 rounded-full overflow-hidden shadow-[0_0_20px_rgba(197,164,109,0.05)] hover:shadow-[0_0_30px_rgba(197,164,109,0.15)]"
+            >
+              <span className="relative text-aminah-gold text-[10px] font-sans font-bold tracking-[0.2em] uppercase group-hover:text-aminah-ivory transition-colors z-10">
+                Explore Proggamoy Quran
+              </span>
+              
+              {/* Switch UI Element */}
+              <div className="relative w-10 h-5 rounded-full border border-aminah-gold/50 bg-[#0a110f] flex items-center p-[2px] transition-colors z-10">
+                <div className="w-3.5 h-3.5 rounded-full bg-aminah-gold group-hover:translate-x-5 transition-transform duration-500 ease-out shadow-[0_0_10px_rgba(197,164,109,0.8)]"></div>
+              </div>
+            </Link>
+          </div>
+
+          <p className="text-3xl md:text-5xl lg:text-6xl text-aminah-ivory/95 italic font-light max-w-4xl mx-auto leading-tight drop-shadow-md pointer-events-none mt-6">
             "Guided by Revelation. <br className="hidden md:block" /> Building a Safer Tomorrow."
           </p>
         </div>
