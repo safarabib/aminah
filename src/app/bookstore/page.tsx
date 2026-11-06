@@ -35,7 +35,14 @@ export default async function Bookstore() {
             {bookList.map((book: any) => (
               <div key={book.id} className="group flex flex-col h-full">
                 <Link href={`/bookstore/${book.id}`} className="w-full aspect-[3/4] bg-[#111c19] border border-aminah-gold/20 mb-6 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/60 transition-all duration-700 cursor-pointer">
-                  <Book className="w-16 h-16 text-aminah-gold/20 group-hover:scale-110 transition-transform duration-700" />
+                  
+                  {/* MAGIC HERE: Render Image if available, else show placeholder icon */}
+                  {book.image_url ? (
+                    <img src={book.image_url} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  ) : (
+                    <Book className="w-16 h-16 text-aminah-gold/20 group-hover:scale-110 transition-transform duration-700" />
+                  )}
+
                   <div className="absolute top-4 right-4 z-20 bg-aminah-gold text-aminah-green text-[9px] font-sans font-bold px-2 py-1 tracking-[0.2em] uppercase">{book.format}</div>
                 </Link>
                 <div className="flex-grow flex flex-col">
