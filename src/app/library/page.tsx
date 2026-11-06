@@ -23,15 +23,28 @@ export default async function DigitalLibrary() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {itemsList.map((item: any) => (
-              <div key={item.id} className="group bg-[#111c19] border border-aminah-gold/20 p-8 flex flex-col h-full">
+              <div key={item.id} className="group bg-[#111c19] border border-aminah-gold/20 p-8 flex flex-col h-full hover:border-aminah-gold/50 transition-colors">
                 <div className="flex justify-between items-start mb-6">
                   <div className="text-aminah-gold">{item.type === 'PDF' ? <Download className="w-6 h-6" /> : <BookOpen className="w-6 h-6" />}</div>
                   <span className="text-[9px] font-sans font-bold tracking-[0.2em] uppercase text-aminah-green bg-aminah-gold px-2 py-1">{item.isFree ? "Free" : "Premium"}</span>
                 </div>
                 <div className="flex-grow">
                   <p className="text-aminah-gold/70 text-[10px] font-sans tracking-[0.2em] uppercase mb-3">{item.category}</p>
-                  <h3 className="text-2xl font-serif text-aminah-ivory mb-3">{item.title}</h3>
+                  <h3 className="text-2xl font-serif text-aminah-ivory mb-3 group-hover:text-aminah-gold transition-colors">{item.title}</h3>
                   <p className="text-aminah-ivory/50 font-serif italic text-sm mb-6">by {item.author}</p>
+                </div>
+                
+                {/* PDF Download Button */}
+                <div className="mt-6 pt-6 border-t border-aminah-gold/20">
+                  {item.file_url ? (
+                    <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full bg-aminah-gold/10 hover:bg-aminah-gold text-aminah-gold hover:text-aminah-green border border-aminah-gold/30 py-3 transition-colors text-xs font-sans font-bold tracking-[0.2em] uppercase">
+                      <Download className="w-4 h-4" /> Download PDF
+                    </a>
+                  ) : (
+                    <button disabled className="flex items-center justify-center gap-2 w-full bg-transparent text-aminah-ivory/30 border border-aminah-gold/10 py-3 text-xs font-sans font-bold tracking-[0.2em] uppercase cursor-not-allowed">
+                      File Unavailable
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
