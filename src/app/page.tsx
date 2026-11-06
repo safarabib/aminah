@@ -1,11 +1,64 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Book, Library, GraduationCap, PenTool } from "lucide-react";
+import { ArrowRight, Book, Library, GraduationCap, PenTool, X } from "lucide-react";
+
+// Premium Quranic Quotes List
+const quranicQuotes = [
+  { text: "What has deceived you concerning your Lord, the Most Generous?", ref: "Surah Al-Infitar (82:6)" },
+  { text: "Has the time not come for the hearts of believers to humble themselves at the remembrance of Allah?", ref: "Surah Al-Hadid (57:16)" },
+  { text: "Does man think that he will be left without purpose?", ref: "Surah Al-Qiyamah (75:36)" },
+  { text: "Did you then think that We created you without purpose and that you would never be returned to Us?", ref: "Surah Al-Mu'minun (23:115)" },
+  { text: "So which of the favours of your Lord will you deny?", ref: "Surah Ar-Rahman (55:13)" },
+  { text: "Say, 'Have you considered: if your water were to become sunken into the earth, then who could bring you flowing water?'", ref: "Surah Al-Mulk (67:30)" },
+  { text: "And in yourselves. Then will you not see?", ref: "Surah Adh-Dhariyat (51:21)" },
+  { text: "Or do you think that you will enter Paradise while such [trials] have not yet come to you as came to those who passed on before you?", ref: "Surah Al-Baqarah (2:214)" },
+  { text: "Have you seen the one who has taken as his god his own desire?", ref: "Surah Al-Jathiyah (45:23)" },
+  { text: "Or were they created by nothing, or were they the creators [of themselves]?", ref: "Surah At-Tur (52:35)" },
+  { text: "Say, 'Are those who know equal to those who do not know?'", ref: "Surah Az-Zumar (39:9)" },
+  { text: "And you see the earth lifeless, but when We send down rain upon it, it stirs and swells and grows [something] of every beautiful kind.", ref: "Surah Al-Hajj (22:5)" },
+  { text: "Then is He who creates like one who does not create? So will you not be reminded?", ref: "Surah An-Nahl (16:17)" },
+  { text: "Do you order righteousness of the people and forget yourselves while you recite the Scripture? Then will you not reason?", ref: "Surah Al-Baqarah (2:44)" },
+  { text: "Or did you think that you would enter Paradise before Allah makes evident those among you who strive and makes evident those who are steadfast?", ref: "Surah Aal-Imran (3:142)" },
+  { text: "Then do they not look at the camels—how they are created?", ref: "Surah Al-Ghashiyah (88:17)" },
+  { text: "\"Am I not your Lord?\" They said, \"Yes indeed! We testify.\"", ref: "Surah Al-A'raf (7:172)" },
+  { text: "Is Allah not the most just of judges?", ref: "Surah At-Tin (95:8)" },
+  { text: "Is one who walks fallen on his face better guided, or one who walks upright on a straight path?", ref: "Surah Al-Mulk (67:22)" },
+  { text: "So where are you going?", ref: "Surah At-Takwir (81:26)" }
+];
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // State for Dynamic Books and Popup
+  const [featuredBooks, setFeaturedBooks] = useState<any[]>([]);
+  const [quote, setQuote] = useState<{text: string, ref: string} | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+
+  useEffect(() => {
+    // 1. Fetch Database Books
+    const fetchBooks = async () => {
+      try {
+        const res = await fetch("/api/books");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setFeaturedBooks(data.slice(0, 3)); // Get only latest 3 books
+        }
+      } catch (error) {
+        console.error("Error fetching books:", error);
+      }
+    };
+    fetchBooks();
+
+    // 2. Setup Random Quote
+    const randomQuote = quranicQuotes[Math.floor(Math.random() * quranicQuotes.length)];
+    setQuote(randomQuote);
+    
+    // Show popup with a premium 1.5s delay
+    const timer = setTimeout(() => setShowPopup(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Advanced Interactive Starry Sky Physics
   useEffect(() => {
@@ -114,8 +167,25 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="bg-aminah-ivory text-aminah-charcoal selection:bg-aminah-gold selection:text-aminah-green font-serif">
+    <main className="bg-aminah-ivory text-aminah-charcoal selection:bg-aminah-gold selection:text-aminah-green font-serif relative">
       
+      {/* Aesthetic Quranic Popup */}
+      <div className={`fixed bottom-8 right-8 z-50 transition-all duration-1000 transform ${showPopup ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
+        {quote && (
+          <div className="bg-[#0a110f]/95 backdrop-blur-md border border-aminah-gold/30 p-6 shadow-[0_0_40px_rgba(197,164,109,0.15)] max-w-sm relative group">
+            <button 
+              onClick={() => setShowPopup(false)}
+              className="absolute top-3 right-3 text-aminah-gold/50 hover:text-aminah-gold transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <p className="text-aminah-ivory italic text-lg leading-relaxed mb-4 pr-4">"{quote.text}"</p>
+            <div className="w-10 h-px bg-aminah-gold/50 mb-3"></div>
+            <p className="text-aminah-gold text-[10px] font-sans tracking-[0.2em] uppercase font-bold">{quote.ref}</p>
+          </div>
+        )}
+      </div>
+
       {/* Hero Section */}
       <section className="relative min-h-[95vh] flex flex-col items-center justify-center overflow-hidden bg-[#0a110f]">
         <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
@@ -139,7 +209,6 @@ export default function Home() {
                 Explore Proggamoy Quran
               </span>
               
-              {/* Switch UI Element */}
               <div className="relative w-10 h-5 rounded-full border border-aminah-gold/50 bg-[#0a110f] flex items-center p-[2px] transition-colors z-10">
                 <div className="w-3.5 h-3.5 rounded-full bg-aminah-gold group-hover:translate-x-5 transition-transform duration-500 ease-out shadow-[0_0_10px_rgba(197,164,109,0.8)]"></div>
               </div>
@@ -220,7 +289,7 @@ export default function Home() {
         </p>
       </section>
 
-      {/* Featured Publications - Using REAL Data from the provided list */}
+      {/* Featured Publications - Dynamic Data Connection */}
       <section className="py-32 bg-[#0a110f] text-aminah-ivory relative border-t border-aminah-gold/10">
         <div className="max-w-[90rem] mx-auto px-6 lg:px-12">
           
@@ -234,52 +303,36 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-20">
-            {/* Book 1 - Real Data */}
-            <div className="group cursor-pointer flex flex-col items-center">
-              <div className="w-full aspect-[3/4] bg-aminah-green/20 border border-aminah-gold/20 mb-8 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 group-hover:shadow-[0_0_30px_rgba(197,164,109,0.1)] transition-all duration-700">
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-80 z-10"></div>
-                <Book className="w-16 h-16 text-aminah-gold/30 group-hover:scale-110 transition-transform duration-700 z-0" />
-                <div className="absolute top-4 right-4 z-20 bg-aminah-gold text-aminah-green text-[9px] font-sans font-bold px-2 py-1 tracking-[0.2em] uppercase">Hardcover</div>
-              </div>
-              <div className="text-center w-full">
-                <h3 className="text-2xl font-serif text-aminah-ivory mb-2 group-hover:text-aminah-gold transition-colors">Proggamoy Quraan</h3>
-                <p className="text-aminah-ivory/50 font-serif italic mb-4">Shobdartho O Shabdik Onubad</p>
-                <div className="w-8 h-px bg-aminah-gold/50 mx-auto mb-4"></div>
-                <p className="text-aminah-gold font-sans tracking-widest text-sm">৳1000</p>
-              </div>
+          {featuredBooks.length === 0 ? (
+            <div className="flex justify-center items-center h-40">
+               <p className="text-aminah-gold/50 font-sans tracking-widest text-sm uppercase">Loading publications...</p>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-20">
+              {featuredBooks.map((book: any, index: number) => (
+                <Link href={`/bookstore/${book.id}`} key={book.id} className={`group cursor-pointer flex flex-col items-center ${index === 1 ? 'md:mt-12' : ''}`}>
+                  <div className="w-full aspect-[3/4] bg-aminah-green/20 border border-aminah-gold/20 mb-8 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 group-hover:shadow-[0_0_30px_rgba(197,164,109,0.1)] transition-all duration-700">
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-80 z-10"></div>
+                    
+                    {/* Database Image Render */}
+                    {book.image_url ? (
+                      <img src={book.image_url} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 z-0" />
+                    ) : (
+                      <Book className="w-16 h-16 text-aminah-gold/30 group-hover:scale-110 transition-transform duration-700 z-0" />
+                    )}
 
-            {/* Book 2 - Real Data */}
-            <div className="group cursor-pointer flex flex-col items-center mt-0 md:mt-12">
-              <div className="w-full aspect-[3/4] bg-aminah-green/20 border border-aminah-gold/20 mb-8 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 group-hover:shadow-[0_0_30px_rgba(197,164,109,0.1)] transition-all duration-700">
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-80 z-10"></div>
-                <Book className="w-16 h-16 text-aminah-gold/30 group-hover:scale-110 transition-transform duration-700 z-0" />
-                <div className="absolute top-4 right-4 z-20 bg-aminah-gold text-aminah-green text-[9px] font-sans font-bold px-2 py-1 tracking-[0.2em] uppercase">Paperback</div>
-              </div>
-              <div className="text-center w-full">
-                <h3 className="text-2xl font-serif text-aminah-ivory mb-2 group-hover:text-aminah-gold transition-colors">Ohe Jara Imaan Enecho</h3>
-                <p className="text-aminah-ivory/50 font-serif italic mb-4">AMINAH Publications</p>
-                <div className="w-8 h-px bg-aminah-gold/50 mx-auto mb-4"></div>
-                <p className="text-aminah-gold font-sans tracking-widest text-sm">৳250</p>
-              </div>
+                    <div className="absolute top-4 right-4 z-20 bg-aminah-gold text-aminah-green text-[9px] font-sans font-bold px-2 py-1 tracking-[0.2em] uppercase">{book.format}</div>
+                  </div>
+                  <div className="text-center w-full">
+                    <h3 className="text-2xl font-serif text-aminah-ivory mb-2 group-hover:text-aminah-gold transition-colors">{book.title}</h3>
+                    <p className="text-aminah-ivory/50 font-serif italic mb-4">{book.author}</p>
+                    <div className="w-8 h-px bg-aminah-gold/50 mx-auto mb-4"></div>
+                    <p className="text-aminah-gold font-sans tracking-widest text-sm">৳{book.price}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
-
-            {/* Book 3 - Real Data */}
-            <div className="group cursor-pointer flex flex-col items-center">
-              <div className="w-full aspect-[3/4] bg-aminah-green/20 border border-aminah-gold/20 mb-8 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 group-hover:shadow-[0_0_30px_rgba(197,164,109,0.1)] transition-all duration-700">
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-80 z-10"></div>
-                <Book className="w-16 h-16 text-aminah-gold/30 group-hover:scale-110 transition-transform duration-700 z-0" />
-                <div className="absolute top-4 right-4 z-20 bg-aminah-gold text-aminah-green text-[9px] font-sans font-bold px-2 py-1 tracking-[0.2em] uppercase">Pocket Size</div>
-              </div>
-              <div className="text-center w-full">
-                <h3 className="text-2xl font-serif text-aminah-ivory mb-2 group-hover:text-aminah-gold transition-colors">Hajj O Umrah</h3>
-                <p className="text-aminah-ivory/50 font-serif italic mb-4">Sofor Kalin Dua</p>
-                <div className="w-8 h-px bg-aminah-gold/50 mx-auto mb-4"></div>
-                <p className="text-aminah-gold font-sans tracking-widest text-sm">৳150</p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
