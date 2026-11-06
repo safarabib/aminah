@@ -16,10 +16,33 @@ export async function POST(request: Request) {
     price: parseFloat(body.price),
     format: body.format,
     description: body.description || "No description available.",
+    image_url: body.image_url || null, // Image upload support added
   }]).select();
   
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data[0]);
+}
+
+// NEW: Update existing book
+export async function PUT(request: Request) {
+  const body = await request.json();
+  
+  if (!body.id) {
+    return NextResponse.json({ error: "Book ID is required for update" }, { status: 400 });
+  }
+
+  const { data, error } = await supabase.from('books').update({
+    title: body.title,
+    author: body.author,
+    category: body.category,
+    price: parseFloat(body.price),
+    format: body.format,
+    description: body.description,
+    image_url: body.image_url,
+  }).eq('id', body.id).select();
+  
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data?.[0] || {});
 }
 
 export async function DELETE(request: Request) {
