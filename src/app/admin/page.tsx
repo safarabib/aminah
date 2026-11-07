@@ -2,12 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase"; // Correctly using central supabase client
 
-// Supabase client setup for direct file uploads
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Centralized Professional Category List
+const CATEGORIES = [
+  "Qur’an & Mushaf",
+  "Tafsir (Exegesis)",
+  "Hadith",
+  "Aqeedah (Islamic Creed)",
+  "Fiqh (Islamic Jurisprudence)",
+  "salah",
+  "zakat",
+  "sawm",
+  "hajj",
+  "Seerah & Biographies",
+  "Tasawwuf & Spirituality (Raqaiq)",
+  "Islamic History & Civilization",
+  "Family, Parenting & Women in Islam",
+  "Comparative Religion & Dawah",
+  "Islamic Ethics, Economics & Governance",
+  "Children & Youth Literature",
+  "Quranic Science",
+  "Health & Medical",
+  "Business"
+];
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,18 +43,19 @@ export default function AdminDashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Form states
+  // Form states - Books
   const [bookTitle, setBookTitle] = useState("");
   const [bookAuthor, setBookAuthor] = useState("AMINAH Publications");
-  const [bookCategory, setBookCategory] = useState("General");
+  const [bookCategory, setBookCategory] = useState(CATEGORIES[0]);
   const [bookPrice, setBookPrice] = useState("0");
   const [bookFormat, setBookFormat] = useState("Paperback");
   const [bookDesc, setBookDesc] = useState("");
   const [bookImage, setBookImage] = useState("");
 
+  // Form states - Library
   const [libTitle, setLibTitle] = useState("");
   const [libAuthor, setLibAuthor] = useState("Research Board");
-  const [libCategory, setLibCategory] = useState("Qur'anic Science");
+  const [libCategory, setLibCategory] = useState(CATEGORIES[0]);
   const [libType, setLibType] = useState("PDF");
   const [libIsFree, setLibIsFree] = useState(true);
   const [libDesc, setLibDesc] = useState("");
@@ -85,8 +104,8 @@ export default function AdminDashboard() {
   const resetForm = () => {
     setIsEditing(false);
     setEditingId(null);
-    setBookTitle(""); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory("General"); setBookFormat("Paperback");
-    setLibTitle(""); setLibDesc(""); setLibFileUrl("");
+    setBookTitle(""); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory(CATEGORIES[0]); setBookFormat("Paperback");
+    setLibTitle(""); setLibDesc(""); setLibFileUrl(""); setLibCategory(CATEGORIES[0]);
   };
 
   const handleEditClick = (item: any, type: "book" | "library") => {
@@ -96,7 +115,7 @@ export default function AdminDashboard() {
       setActiveTab("books");
       setBookTitle(item.title);
       setBookAuthor(item.author || "AMINAH Publications");
-      setBookCategory(item.category || "General");
+      setBookCategory(item.category || CATEGORIES[0]);
       setBookPrice(item.price || "0");
       setBookFormat(item.format || "Paperback");
       setBookDesc(item.description || "");
@@ -105,7 +124,7 @@ export default function AdminDashboard() {
       setActiveTab("library");
       setLibTitle(item.title);
       setLibAuthor(item.author || "Research Board");
-      setLibCategory(item.category || "Qur'anic Science");
+      setLibCategory(item.category || CATEGORIES[0]);
       setLibType(item.type || "PDF");
       setLibIsFree(item.isFree);
       setLibDesc(item.description || "");
@@ -126,8 +145,11 @@ export default function AdminDashboard() {
 
       const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
       
-      if (bucket === 'book-covers') setBookImage(data.publicUrl);
-      else setLibFileUrl(data.publicUrl);
+      if (bucket === 'book-covers') {
+        setBookImage(data.publicUrl);
+      } else {
+        setLibFileUrl(data.publicUrl);
+      }
       
     } catch (error) {
       console.error('Upload Error:', error);
@@ -232,6 +254,7 @@ export default function AdminDashboard() {
               <h2 className="text-xl">{isEditing ? "Edit" : "Add New"} {activeTab === "books" ? "Book" : "Library Item"}</h2>
             </div>
             
+            {/* BOOKS FORM */}
             {activeTab === "books" && (
               <form onSubmit={handleSaveBook} className="space-y-5 font-sans">
                 <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Book Title</label><input type="text" required value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
@@ -253,7 +276,16 @@ export default function AdminDashboard() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Price (৳)</label><input type="number" required value={bookPrice} onChange={(e) => setBookPrice(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
-                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label><input type="text" value={bookCategory} onChange={(e) => setBookCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
+                  
+                  {/* Category Dropdown for Books */}
+                  <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label>
+                    <select value={bookCategory} onChange={(e) => setBookCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
+                      {CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 
                 <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
@@ -263,6 +295,7 @@ export default function AdminDashboard() {
               </form>
             )}
 
+            {/* LIBRARY FORM */}
             {activeTab === "library" && (
               <form onSubmit={handleSaveLibrary} className="space-y-5 font-sans">
                 <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Document Title</label><input type="text" required value={libTitle} onChange={(e) => setLibTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
@@ -285,12 +318,21 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                    <div>
                     <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Access</label>
-                    <select value={libIsFree ? "true" : "false"} onChange={(e) => setLibIsFree(e.target.value === "true")} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none">
+                    <select value={libIsFree ? "true" : "false"} onChange={(e) => setLibIsFree(e.target.value === "true")} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
                       <option value="true">Free</option>
                       <option value="false">Premium</option>
                     </select>
                   </div>
-                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label><input type="text" value={libCategory} onChange={(e) => setLibCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
+                  
+                  {/* Category Dropdown for Library */}
+                  <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label>
+                    <select value={libCategory} onChange={(e) => setLibCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
+                      {CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 
                 <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
