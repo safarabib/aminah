@@ -26,6 +26,10 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-10">
             <Link href="/" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Home</Link>
+            
+            {/* NEW: About Aminah Link added here */}
+            <Link href="/about" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">About Aminah</Link>
+            
             <Link href="/bookstore" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Our Publications</Link>
             <Link href="/library" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Digital Library</Link>
             <Link href="/learning" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Education</Link>
@@ -63,6 +67,10 @@ export default function Header() {
         <div className="lg:hidden absolute top-24 left-0 w-full h-screen bg-aminah-green/95 backdrop-blur-3xl border-t border-white/5 transition-all duration-500">
           <nav className="flex flex-col px-8 py-10 space-y-8">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Home</Link>
+            
+            {/* NEW: About Aminah Mobile Link added here */}
+            <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">About Aminah</Link>
+            
             <Link href="/bookstore" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Our Publications</Link>
             <Link href="/library" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Digital Library</Link>
             <Link href="/learning" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Education</Link>

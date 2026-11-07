@@ -16,7 +16,7 @@ const quranicQuotes = [
   { text: "Do you think you will enter Paradise without being tested?", ref: "Surah Al-Baqarah (2:214)" },
   { text: "Were you created by nothing, or are you yourselves the creators?", ref: "Surah At-Tur (52:35)" },
   { text: "Do you command others to do good while forgetting yourselves?", ref: "Surah Al-Baqarah (2:44)" },
-  { text: "1Do you think you will enter Paradise without Allah making evident those among you who strive and remain steadfast?", ref: "Surah Aal-Imran (3:142)" },
+  { text: "Do you think you will enter Paradise without Allah making evident those among you who strive and remain steadfast?", ref: "Surah Aal-Imran (3:142)" },
   { text: "Have they not looked at the camels, how they were created?", ref: "Surah Al-Ghashiyah (88:17)" }
 ];
 
@@ -171,7 +171,7 @@ export default function Home() {
             >
               <X className="w-4 h-4" />
             </button>
-            <p className="text-aminah-ivory italic text-lg leading-relaxed mb-4 pr-4">"{quote.text}"</p>
+            <p className="text-aminah-ivory italic text-lg leading-relaxed mb-4 pr-4">&quot;{quote.text}&quot;</p>
             <div className="w-10 h-px bg-aminah-gold/50 mb-3"></div>
             <p className="text-aminah-gold text-[10px] font-sans tracking-[0.2em] uppercase font-bold">{quote.ref}</p>
           </div>
@@ -183,14 +183,14 @@ export default function Home() {
         <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#0a110f_100%)] z-0 opacity-80 pointer-events-none"></div>
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-24">
+        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-24 flex flex-col items-center">
           
-          <h2 className="text-aminah-gold text-sm md:text-lg font-sans tracking-[0.4em] uppercase mb-10 opacity-90 pointer-events-none">
-            An Institution for Quranic Knowledge
+          <h2 className="text-aminah-gold/80 text-sm md:text-base font-sans tracking-[0.3em] uppercase mb-8 pointer-events-none">
+            An Institution for Qur&apos;anic Knowledge
           </h2>
           
-          {/* Aesthetic Switch Button */}
-          <div className="flex justify-center mb-10">
+          {/* Aesthetic Switch Button for Proggamoy Quran */}
+          <div className="flex justify-center mb-8">
             <Link 
               href="https://proggamoyquran.com/" 
               target="_blank"
@@ -207,9 +207,21 @@ export default function Home() {
             </Link>
           </div>
 
-          <p className="text-3xl md:text-5xl lg:text-6xl text-aminah-ivory/95 italic font-light max-w-4xl mx-auto leading-tight drop-shadow-md pointer-events-none mt-6">
-            "Guided by Revelation. <br className="hidden md:block" /> Building a Safer Tomorrow."
-          </p>
+          <h1 className="text-3xl md:text-5xl lg:text-6xl text-aminah-ivory font-serif italic max-w-3xl leading-snug drop-shadow-md mb-12">
+            &quot;Guided by Revelation.<br />
+            <span className="text-aminah-gold">Building a Safer Tomorrow.&quot;</span>
+          </h1>
+
+          {/* NEW: About Aminah Button */}
+          <div>
+            <Link 
+              href="/about" 
+              className="inline-flex items-center justify-center border border-aminah-gold/40 hover:border-aminah-gold bg-transparent hover:bg-aminah-gold/10 text-aminah-gold px-8 py-4 uppercase tracking-[0.2em] text-xs font-sans font-bold transition-all duration-500"
+            >
+              Know more About Aminah
+            </Link>
+          </div>
+
         </div>
       </section>
 
@@ -274,7 +286,7 @@ export default function Home() {
         </h2>
         <div className="w-12 h-px bg-aminah-gold mx-auto mb-12"></div>
         <p className="text-xl md:text-3xl text-aminah-charcoal/80 italic mb-8 leading-relaxed">
-          “And Allah presents an example: a city which was safe and secure, its provision coming to it abundantly from every location. But it denied the favors of Allah, so Allah made it taste the garb of hunger and fear for what they used to do.”
+          &ldquo;And Allah presents an example: a city which was safe and secure, its provision coming to it abundantly from every location. But it denied the favors of Allah, so Allah made it taste the garb of hunger and fear for what they used to do.&rdquo;
         </p>
         <p className="text-xs font-sans font-bold text-aminah-gold tracking-[0.3em] uppercase">
           Surah An-Nahl, 16:112
