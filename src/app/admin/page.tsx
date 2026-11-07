@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud } from "lucide-react";
-import { supabase } from "@/lib/supabase"; // Correctly using central supabase client
+import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star } from "lucide-react";
+import { supabase } from "@/lib/supabase"; 
 
 // Centralized Professional Category List
 const CATEGORIES = [
@@ -45,18 +45,19 @@ export default function AdminDashboard() {
 
   // Form states - Books
   const [bookTitle, setBookTitle] = useState("");
-  const [bookAuthor, setBookAuthor] = useState("AMINAH Publications"); // Author added
-  const [bookPublisher, setBookPublisher] = useState("AMINAH Publications"); // Publisher added
+  const [bookAuthor, setBookAuthor] = useState("AMINAH Publications"); 
+  const [bookPublisher, setBookPublisher] = useState("AMINAH Publications"); 
   const [bookCategory, setBookCategory] = useState(CATEGORIES[0]);
   const [bookPrice, setBookPrice] = useState("0");
   const [bookFormat, setBookFormat] = useState("Paperback");
   const [bookDesc, setBookDesc] = useState("");
   const [bookImage, setBookImage] = useState("");
+  const [bookIsFeatured, setBookIsFeatured] = useState(false); // NEW: Featured State
 
   // Form states - Library
   const [libTitle, setLibTitle] = useState("");
-  const [libAuthor, setLibAuthor] = useState("Research Board"); // Author added
-  const [libPublisher, setLibPublisher] = useState("Research Board"); // Publisher added
+  const [libAuthor, setLibAuthor] = useState("Research Board"); 
+  const [libPublisher, setLibPublisher] = useState("Research Board"); 
   const [libCategory, setLibCategory] = useState(CATEGORIES[0]);
   const [libType, setLibType] = useState("PDF");
   const [libIsFree, setLibIsFree] = useState(true);
@@ -106,7 +107,7 @@ export default function AdminDashboard() {
   const resetForm = () => {
     setIsEditing(false);
     setEditingId(null);
-    setBookTitle(""); setBookAuthor("AMINAH Publications"); setBookPublisher("AMINAH Publications"); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory(CATEGORIES[0]); setBookFormat("Paperback");
+    setBookTitle(""); setBookAuthor("AMINAH Publications"); setBookPublisher("AMINAH Publications"); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory(CATEGORIES[0]); setBookFormat("Paperback"); setBookIsFeatured(false);
     setLibTitle(""); setLibAuthor("Research Board"); setLibPublisher("Research Board"); setLibDesc(""); setLibFileUrl(""); setLibCategory(CATEGORIES[0]);
   };
 
@@ -123,6 +124,7 @@ export default function AdminDashboard() {
       setBookFormat(item.format || "Paperback");
       setBookDesc(item.description || "");
       setBookImage(item.image_url || "");
+      setBookIsFeatured(item.is_featured || false); // Load featured state
     } else {
       setActiveTab("library");
       setLibTitle(item.title);
@@ -167,7 +169,18 @@ export default function AdminDashboard() {
     e.preventDefault();
     setAdding(true);
     const method = isEditing ? "PUT" : "POST";
-    const body = { id: editingId, title: bookTitle, author: bookAuthor, publisher: bookPublisher, category: bookCategory, price: Number(bookPrice), format: bookFormat, description: bookDesc, image_url: bookImage };
+    const body = { 
+      id: editingId, 
+      title: bookTitle, 
+      author: bookAuthor, 
+      publisher: bookPublisher, 
+      category: bookCategory, 
+      price: Number(bookPrice), 
+      format: bookFormat, 
+      description: bookDesc, 
+      image_url: bookImage,
+      is_featured: bookIsFeatured // Pass featured state to API
+    };
     
     await fetch("/api/books", {
       method,
@@ -296,6 +309,12 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                 </div>
+
+                {/* NEW: Feature Checkbox */}
+                <div className="flex items-center gap-3 bg-[#0a110f] border border-aminah-gold/20 p-4 mt-2">
+                  <input type="checkbox" id="featureBook" checked={bookIsFeatured} onChange={(e) => setBookIsFeatured(e.target.checked)} className="w-4 h-4 accent-aminah-gold cursor-pointer" />
+                  <label htmlFor="featureBook" className="text-xs text-aminah-ivory tracking-widest cursor-pointer select-none">Feature on Landing Page</label>
+                </div>
                 
                 <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
                   {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Book" : "Publish Book"}
@@ -369,7 +388,7 @@ export default function AdminDashboard() {
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {activeTab === "books" && books.map((book) => (
-                  <div key={book.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-center group">
+                  <div key={book.id} className={`bg-[#0a110f] border p-4 transition-colors flex justify-between items-center group ${book.is_featured ? 'border-aminah-gold/60 bg-[#111c19]/50 shadow-md' : 'border-aminah-gold/10 hover:border-aminah-gold/40'}`}>
                     <div className="flex items-center gap-4">
                       {book.image_url ? (
                          <img src={book.image_url} alt="cover" className="w-12 h-16 object-cover border border-aminah-gold/30" />
@@ -377,10 +396,12 @@ export default function AdminDashboard() {
                          <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>
                       )}
                       <div>
-                        <h3 className="text-lg text-aminah-ivory">{book.title}</h3>
-                        {/* Displaying Author and Publisher in List */}
+                        <h3 className="text-lg text-aminah-ivory flex items-center gap-2">
+                          {book.title}
+                          {book.is_featured && <Star className="w-4 h-4 text-aminah-gold fill-aminah-gold" />}
+                        </h3>
                         <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {book.author || "Unknown"} • {book.publisher || "N/A"}</p>
-                        <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{book.format} - {book.category}</p>
+                        <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{book.format} • {book.category}</p>
                         <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">৳ {book.price}</p>
                       </div>
                     </div>
@@ -399,7 +420,6 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <h3 className="text-lg text-aminah-ivory">{item.title}</h3>
-                        {/* Displaying Author and Publisher in List */}
                         <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {item.author || "Unknown"} • {item.publisher || "N/A"}</p>
                         <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{item.category}</p>
                         <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">{item.isFree ? "Free" : "Premium"}</p>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Book, Library, GraduationCap, PenTool, X } from "lucide-react";
 
-// Premium Quranic Quotes List
+// Premium Quranic Quotes List - Exactly as requested
 const quranicQuotes = [
   { text: "What has deceived you concerning your Lord, the Most Generous?", ref: "Surah Al-Infitar (82:6)" },
   { text: "Has the time not come for the hearts of believers to humble themselves at the remembrance of Allah?", ref: "Surah Al-Hadid (57:16)" },
@@ -23,18 +23,17 @@ const quranicQuotes = [
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
+  // State for Dynamic Books and Popup
   const [featuredBooks, setFeaturedBooks] = useState<any[]>([]);
   const [quote, setQuote] = useState<{text: string, ref: string} | null>(null);
   const [showPopup, setShowPopup] = useState(false);
-  
-  // Cinematic Gateway State
-  const [appState, setAppState] = useState<"loading" | "revealing" | "ready">("loading");
-  
-  // Ambient Torch & Magnetic Effects
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isLoaded, setIsLoaded] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // 3D Tilt States for 4 Cards
+  // Ambient Torch Effect State
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  // Tilt States for Cards
   const [tiltStates, setTiltStates] = useState([
     { rotateX: 0, rotateY: 0 },
     { rotateX: 0, rotateY: 0 },
@@ -43,27 +42,41 @@ export default function Home() {
   ]);
 
   useEffect(() => {
-    // 1. Cinematic Entry Sequence
-    setTimeout(() => setAppState("revealing"), 800);
-    setTimeout(() => setAppState("ready"), 2500);
+    // Trigger Cinematic Fade In
+    setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
 
-    // 2. Fetch Database Books
+    // 1. Fetch Database Books - FILTERING FEATURED BOOKS
     const fetchBooks = async () => {
       try {
         const res = await fetch("/api/books");
         const data = await res.json();
-        if (Array.isArray(data)) setFeaturedBooks(data.slice(0, 3));
+        if (Array.isArray(data)) {
+          // Check if any books have the 'is_featured' flag set to true
+          const featured = data.filter((book: any) => book.is_featured);
+          
+          if (featured.length > 0) {
+             setFeaturedBooks(featured.slice(0, 3));
+          } else {
+             // Fallback: If no books are featured, just show the first 3
+             setFeaturedBooks(data.slice(0, 3)); 
+          }
+        }
       } catch (error) {
         console.error("Error fetching books:", error);
       }
     };
     fetchBooks();
 
-    // 3. Setup Random Quote
-    setQuote(quranicQuotes[Math.floor(Math.random() * quranicQuotes.length)]);
-    const timer = setTimeout(() => setShowPopup(true), 4000);
+    // 2. Setup Random Quote
+    const randomQuote = quranicQuotes[Math.floor(Math.random() * quranicQuotes.length)];
+    setQuote(randomQuote);
+    
+    // Show popup with a premium delay
+    const timer = setTimeout(() => setShowPopup(true), 2500);
 
-    // 4. Scroll Tracking for Reveal Effects
+    // Track scroll for CSS reveals
     const handleScroll = () => {
       const scrolled = window.scrollY;
       const maxScroll = document.body.scrollHeight - window.innerHeight;
@@ -77,7 +90,7 @@ export default function Home() {
     };
   }, []);
 
-  // Handle Global Ambient Mouse Light
+  // Ambient Glow Tracker
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -96,7 +109,7 @@ export default function Home() {
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     
-    const rotateX = ((y - centerY) / centerY) * -10; // Max 10 deg tilt
+    const rotateX = ((y - centerY) / centerY) * -10;
     const rotateY = ((x - centerX) / centerX) * 10;
     
     const newTilts = [...tiltStates];
@@ -112,8 +125,6 @@ export default function Home() {
 
   // Advanced Interactive Starry Sky Physics
   useEffect(() => {
-    if (appState === "loading") return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -151,6 +162,7 @@ export default function Home() {
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseout", handleLeave);
+    
     window.addEventListener("resize", () => {
       width = window.innerWidth;
       height = window.innerHeight;
@@ -175,7 +187,7 @@ export default function Home() {
           targetY -= parallaxY;
 
           const dx = star.x - localMouse.x;
-          const dy = (star.y + (window.scrollY * star.speed)) - localMouse.y; 
+          const dy = (star.y + (window.scrollY * star.speed)) - localMouse.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < interactionRadius) {
@@ -208,25 +220,18 @@ export default function Home() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseout", handleLeave);
     };
-  }, [appState]);
+  }, []);
 
   return (
-    <main className="bg-aminah-ivory text-aminah-charcoal selection:bg-aminah-gold selection:text-aminah-green font-serif relative overflow-x-hidden min-h-screen">
+    <main className="bg-[#0a110f] text-aminah-charcoal selection:bg-aminah-gold selection:text-aminah-green font-serif relative overflow-x-hidden min-h-screen">
       
-      {/* 1. THE GATEWAY PRE-LOADER */}
-      <div className={`fixed inset-0 z-[100] bg-[#050807] flex items-center justify-center transition-all duration-1000 pointer-events-none ${appState === "loading" ? "opacity-100" : appState === "revealing" ? "opacity-100" : "opacity-0"}`}>
-        <div className={`transition-all duration-1000 ease-out transform ${appState === "loading" ? "scale-95 opacity-0 blur-sm" : appState === "revealing" ? "scale-100 opacity-100 blur-0" : "scale-110 opacity-0 blur-md"}`}>
-          <img src="/logo.png" alt="AMINAH Logo" className="h-16 w-auto object-contain brightness-0 invert drop-shadow-[0_0_20px_rgba(197,164,109,0.5)]" />
-        </div>
-      </div>
-
-      {/* 2. THE READING TORCH (Ambient Mouse Glow) */}
+      {/* THE READING TORCH (Ambient Mouse Glow) */}
       <div 
         className="fixed top-0 left-0 w-[600px] h-[600px] pointer-events-none z-0 rounded-full blur-[120px] transition-opacity duration-1000"
         style={{
           background: 'radial-gradient(circle, rgba(197,164,109,0.08) 0%, rgba(197,164,109,0) 70%)',
           transform: `translate(${mousePos.x - 300}px, ${mousePos.y - 300}px)`,
-          opacity: appState === "ready" ? 1 : 0
+          opacity: isLoaded ? 1 : 0
         }}
       />
 
@@ -235,7 +240,10 @@ export default function Home() {
         {quote && (
           <div className="bg-[#0a110f]/95 backdrop-blur-md border border-aminah-gold/30 p-6 shadow-[0_0_40px_rgba(197,164,109,0.15)] max-w-sm relative group overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-aminah-gold/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-            <button onClick={() => setShowPopup(false)} className="absolute top-3 right-3 text-aminah-gold/50 hover:text-aminah-gold transition-colors z-10">
+            <button 
+              onClick={() => setShowPopup(false)}
+              className="absolute top-3 right-3 text-aminah-gold/50 hover:text-aminah-gold transition-colors z-10"
+            >
               <X className="w-4 h-4" />
             </button>
             <p className="text-aminah-ivory italic text-lg leading-relaxed mb-4 pr-4 relative z-10">&quot;{quote.text}&quot;</p>
@@ -249,20 +257,20 @@ export default function Home() {
       <section className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden bg-[#0a110f]">
         
         {/* CSS Cinematic Reveal Wrapper */}
-        <div className={`absolute inset-0 transition-opacity duration-[2000ms] ease-out ${appState === "ready" ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute inset-0 transition-opacity duration-[2000ms] ease-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
           <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#0a110f_100%)] z-0 opacity-90 pointer-events-none"></div>
-          
           {/* Subtle Film Grain Noise Overlay */}
           <div className="absolute inset-0 opacity-[0.03] z-0 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")'}}></div>
         </div>
 
-        <div className={`relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center transition-all duration-[2000ms] ease-[cubic-bezier(0.16,1,0.3,1)] transform ${appState === "ready" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}>
+        <div className={`relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center transition-all duration-[2000ms] ease-[cubic-bezier(0.16,1,0.3,1)] transform ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}>
           
           <h2 className="text-aminah-gold/70 text-[10px] md:text-sm font-sans tracking-[0.4em] uppercase mb-8 pointer-events-none drop-shadow-[0_0_10px_rgba(197,164,109,0.3)]">
             An Institution for Qur&apos;anic Knowledge
           </h2>
           
+          {/* Aesthetic Switch Button for Proggamoy Quran */}
           <div className="flex justify-center mb-8">
             <Link 
               href="https://proggamoyquran.com/" 
@@ -274,6 +282,7 @@ export default function Home() {
               <span className="relative text-aminah-gold/90 text-[10px] font-sans font-bold tracking-[0.2em] uppercase group-hover:text-aminah-ivory transition-colors z-10">
                 Explore Proggamoy Quran
               </span>
+              
               <div className="relative w-10 h-5 rounded-full border border-aminah-gold/40 bg-[#050807] flex items-center p-[2px] transition-colors z-10">
                 <div className="w-3.5 h-3.5 rounded-full bg-aminah-gold group-hover:translate-x-5 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-[0_0_10px_rgba(197,164,109,0.8)]"></div>
               </div>
@@ -282,9 +291,10 @@ export default function Home() {
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl text-aminah-ivory font-serif italic max-w-4xl leading-tight drop-shadow-2xl mb-12" style={{ textShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
             &quot;Guided by Revelation.<br />
-            <span className="text-aminah-gold bg-clip-text">Building a Safer Tomorrow.&quot;</span>
+            <span className="text-aminah-gold">Building a Safer Tomorrow.&quot;</span>
           </h1>
 
+          {/* NEW: About Aminah Premium Ghost Button */}
           <div>
             <Link 
               href="/about" 
@@ -294,11 +304,12 @@ export default function Home() {
               <span className="relative z-10 group-hover:text-aminah-ivory transition-colors duration-500">Know more About Aminah</span>
             </Link>
           </div>
+
         </div>
       </section>
 
-      {/* 3. 3D MAGNETIC TILT CARDS */}
-      <section className={`relative z-20 -mt-32 px-6 lg:px-12 max-w-[90rem] mx-auto transition-all duration-[1500ms] delay-500 transform ${appState === "ready" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`} style={{ perspective: '1000px' }}>
+      {/* 3D MAGNETIC TILT CARDS */}
+      <section className={`relative z-20 -mt-32 px-6 lg:px-12 max-w-[90rem] mx-auto transition-all duration-[1500ms] delay-500 transform ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`} style={{ perspective: '1000px' }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           
           {[
@@ -342,7 +353,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Qur'anic Foundation (On-Scroll Reveal via CSS) */}
+      {/* Qur'anic Foundation */}
       <section className="py-40 px-6 max-w-5xl mx-auto text-center relative z-10">
         <div className="transition-all duration-1000 ease-out" style={{ opacity: scrollProgress > 0.1 ? 1 : 0, transform: `translateY(${scrollProgress > 0.1 ? 0 : 40}px)` }}>
           <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-arabic text-aminah-green mb-16 leading-[1.8] font-bold drop-shadow-sm" dir="rtl">
@@ -358,7 +369,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. LEVITATING FEATURED BOOKS */}
+      {/* Featured Publications - Dynamic Data Connection */}
       <section className="py-32 bg-[#050807] text-aminah-ivory relative border-t border-aminah-gold/10 overflow-hidden">
         {/* Subtle Noise for Dark Sections */}
         <div className="absolute inset-0 opacity-[0.02] z-0 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")'}}></div>
