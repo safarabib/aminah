@@ -160,6 +160,29 @@ export default function AdminDashboard() {
     fetchData();
   };
 
+  const handleSaveLibrary = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdding(true);
+    const method = isEditing ? "PUT" : "POST";
+    const body = { id: editingId, title: libTitle, author: libAuthor, category: libCategory, type: libType, isFree: libIsFree, description: libDesc, file_url: libFileUrl };
+    
+    await fetch("/api/library", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    
+    resetForm();
+    fetchData();
+    setAdding(false);
+  };
+
+  const handleDeleteLibrary = async (id: string) => {
+    if (!confirm("Are you sure?")) return;
+    await fetch(`/api/library?id=${id}`, { method: "DELETE" });
+    fetchData();
+  };
+
   // --- LOGIN SCREEN ---
   if (!isAuthenticated) {
     return (
@@ -239,6 +262,43 @@ export default function AdminDashboard() {
                 {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
               </form>
             )}
+
+            {activeTab === "library" && (
+              <form onSubmit={handleSaveLibrary} className="space-y-5 font-sans">
+                <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Document Title</label><input type="text" required value={libTitle} onChange={(e) => setLibTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
+                
+                {/* PDF Upload Area */}
+                <div>
+                  <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">PDF Document</label>
+                  <div className="flex gap-2">
+                    <input type="text" placeholder="PDF URL..." value={libFileUrl} onChange={(e) => setLibFileUrl(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory text-sm focus:outline-none focus:border-aminah-gold" />
+                    <label className="bg-aminah-gold/10 border border-aminah-gold/30 p-3 cursor-pointer hover:bg-aminah-gold/20 flex items-center justify-center min-w-[50px] transition-colors">
+                      {uploading ? <Loader2 className="w-4 h-4 animate-spin text-aminah-gold" /> : <UploadCloud className="w-5 h-5 text-aminah-gold" />}
+                      <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, 'book-pdfs')} disabled={uploading} />
+                    </label>
+                  </div>
+                  {libFileUrl && <p className="text-xs text-aminah-green mt-2">File Ready: {libFileUrl.split('/').pop()}</p>}
+                </div>
+
+                <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Description</label><textarea value={libDesc} onChange={(e) => setLibDesc(e.target.value)} rows={3} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                   <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Access</label>
+                    <select value={libIsFree ? "true" : "false"} onChange={(e) => setLibIsFree(e.target.value === "true")} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none">
+                      <option value="true">Free</option>
+                      <option value="false">Premium</option>
+                    </select>
+                  </div>
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label><input type="text" value={libCategory} onChange={(e) => setLibCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
+                </div>
+                
+                <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
+                  {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Item" : "Publish to Library"}
+                </button>
+                {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
+              </form>
+            )}
           </div>
 
           {/* Right List Column */}
@@ -262,13 +322,32 @@ export default function AdminDashboard() {
                       )}
                       <div>
                         <h3 className="text-lg text-aminah-ivory">{book.title}</h3>
-                        <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{book.format} • {book.category}</p>
+                        <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{book.format} - {book.category}</p>
                         <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">৳ {book.price}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => handleEditClick(book, "book")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
                       <button onClick={() => handleDeleteBook(book.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
+                    </div>
+                  </div>
+                ))}
+
+                {activeTab === "library" && libraryItems.map((item) => (
+                  <div key={item.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-center group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-aminah-gold/50" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg text-aminah-ivory">{item.title}</h3>
+                        <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{item.category}</p>
+                        <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">{item.isFree ? "Free" : "Premium"}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleEditClick(item, "library")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
+                      <button onClick={() => handleDeleteLibrary(item.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
                     </div>
                   </div>
                 ))}
