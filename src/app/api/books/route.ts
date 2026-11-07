@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase.from('books').insert([{
     title: body.title,
     author: body.author,
+    publisher: body.publisher, // Added Publisher
     category: body.category,
     price: parseFloat(body.price),
     format: body.format,
@@ -34,6 +35,7 @@ export async function PUT(request: Request) {
   const { data, error } = await supabase.from('books').update({
     title: body.title,
     author: body.author,
+    publisher: body.publisher, // Added Publisher
     category: body.category,
     price: parseFloat(body.price),
     format: body.format,

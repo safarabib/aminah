@@ -45,7 +45,8 @@ export default function AdminDashboard() {
 
   // Form states - Books
   const [bookTitle, setBookTitle] = useState("");
-  const [bookAuthor, setBookAuthor] = useState("AMINAH Publications");
+  const [bookAuthor, setBookAuthor] = useState("AMINAH Publications"); // Author added
+  const [bookPublisher, setBookPublisher] = useState("AMINAH Publications"); // Publisher added
   const [bookCategory, setBookCategory] = useState(CATEGORIES[0]);
   const [bookPrice, setBookPrice] = useState("0");
   const [bookFormat, setBookFormat] = useState("Paperback");
@@ -54,7 +55,8 @@ export default function AdminDashboard() {
 
   // Form states - Library
   const [libTitle, setLibTitle] = useState("");
-  const [libAuthor, setLibAuthor] = useState("Research Board");
+  const [libAuthor, setLibAuthor] = useState("Research Board"); // Author added
+  const [libPublisher, setLibPublisher] = useState("Research Board"); // Publisher added
   const [libCategory, setLibCategory] = useState(CATEGORIES[0]);
   const [libType, setLibType] = useState("PDF");
   const [libIsFree, setLibIsFree] = useState(true);
@@ -104,8 +106,8 @@ export default function AdminDashboard() {
   const resetForm = () => {
     setIsEditing(false);
     setEditingId(null);
-    setBookTitle(""); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory(CATEGORIES[0]); setBookFormat("Paperback");
-    setLibTitle(""); setLibDesc(""); setLibFileUrl(""); setLibCategory(CATEGORIES[0]);
+    setBookTitle(""); setBookAuthor("AMINAH Publications"); setBookPublisher("AMINAH Publications"); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory(CATEGORIES[0]); setBookFormat("Paperback");
+    setLibTitle(""); setLibAuthor("Research Board"); setLibPublisher("Research Board"); setLibDesc(""); setLibFileUrl(""); setLibCategory(CATEGORIES[0]);
   };
 
   const handleEditClick = (item: any, type: "book" | "library") => {
@@ -115,6 +117,7 @@ export default function AdminDashboard() {
       setActiveTab("books");
       setBookTitle(item.title);
       setBookAuthor(item.author || "AMINAH Publications");
+      setBookPublisher(item.publisher || "AMINAH Publications");
       setBookCategory(item.category || CATEGORIES[0]);
       setBookPrice(item.price || "0");
       setBookFormat(item.format || "Paperback");
@@ -124,6 +127,7 @@ export default function AdminDashboard() {
       setActiveTab("library");
       setLibTitle(item.title);
       setLibAuthor(item.author || "Research Board");
+      setLibPublisher(item.publisher || "Research Board");
       setLibCategory(item.category || CATEGORIES[0]);
       setLibType(item.type || "PDF");
       setLibIsFree(item.isFree);
@@ -163,7 +167,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     setAdding(true);
     const method = isEditing ? "PUT" : "POST";
-    const body = { id: editingId, title: bookTitle, author: bookAuthor, category: bookCategory, price: Number(bookPrice), format: bookFormat, description: bookDesc, image_url: bookImage };
+    const body = { id: editingId, title: bookTitle, author: bookAuthor, publisher: bookPublisher, category: bookCategory, price: Number(bookPrice), format: bookFormat, description: bookDesc, image_url: bookImage };
     
     await fetch("/api/books", {
       method,
@@ -186,7 +190,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     setAdding(true);
     const method = isEditing ? "PUT" : "POST";
-    const body = { id: editingId, title: libTitle, author: libAuthor, category: libCategory, type: libType, isFree: libIsFree, description: libDesc, file_url: libFileUrl };
+    const body = { id: editingId, title: libTitle, author: libAuthor, publisher: libPublisher, category: libCategory, type: libType, isFree: libIsFree, description: libDesc, file_url: libFileUrl };
     
     await fetch("/api/library", {
       method,
@@ -259,6 +263,11 @@ export default function AdminDashboard() {
               <form onSubmit={handleSaveBook} className="space-y-5 font-sans">
                 <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Book Title</label><input type="text" required value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
                 
+                <div className="grid grid-cols-2 gap-4">
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={bookAuthor} onChange={(e) => setBookAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Publisher</label><input type="text" required value={bookPublisher} onChange={(e) => setBookPublisher(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                </div>
+
                 {/* Image Upload Area */}
                 <div>
                   <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Cover Image</label>
@@ -300,6 +309,11 @@ export default function AdminDashboard() {
               <form onSubmit={handleSaveLibrary} className="space-y-5 font-sans">
                 <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Document Title</label><input type="text" required value={libTitle} onChange={(e) => setLibTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
                 
+                <div className="grid grid-cols-2 gap-4">
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={libAuthor} onChange={(e) => setLibAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Publisher</label><input type="text" required value={libPublisher} onChange={(e) => setLibPublisher(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                </div>
+
                 {/* PDF Upload Area */}
                 <div>
                   <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">PDF Document</label>
@@ -364,6 +378,8 @@ export default function AdminDashboard() {
                       )}
                       <div>
                         <h3 className="text-lg text-aminah-ivory">{book.title}</h3>
+                        {/* Displaying Author and Publisher in List */}
+                        <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {book.author || "Unknown"} • {book.publisher || "N/A"}</p>
                         <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{book.format} - {book.category}</p>
                         <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">৳ {book.price}</p>
                       </div>
@@ -383,6 +399,8 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <h3 className="text-lg text-aminah-ivory">{item.title}</h3>
+                        {/* Displaying Author and Publisher in List */}
+                        <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {item.author || "Unknown"} • {item.publisher || "N/A"}</p>
                         <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{item.category}</p>
                         <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">{item.isFree ? "Free" : "Premium"}</p>
                       </div>
