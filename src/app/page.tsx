@@ -27,8 +27,14 @@ export default function Home() {
   const [featuredBooks, setFeaturedBooks] = useState<any[]>([]);
   const [quote, setQuote] = useState<{text: string, ref: string} | null>(null);
   const [showPopup, setShowPopup] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    // Trigger Cinematic Fade In
+    setTimeout(() => {
+      setIsLoaded(true);
+    }, 100); // 100ms delay to ensure smooth paint
+
     // 1. Fetch Database Books
     const fetchBooks = async () => {
       try {
@@ -47,8 +53,8 @@ export default function Home() {
     const randomQuote = quranicQuotes[Math.floor(Math.random() * quranicQuotes.length)];
     setQuote(randomQuote);
     
-    // Show popup with a premium 1.5s delay
-    const timer = setTimeout(() => setShowPopup(true), 1500);
+    // Show popup with a premium 2.5s delay for cinematic feel
+    const timer = setTimeout(() => setShowPopup(true), 2500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -180,12 +186,15 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative min-h-[95vh] flex flex-col items-center justify-center overflow-hidden bg-[#0a110f]">
-        <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#0a110f_100%)] z-0 opacity-80 pointer-events-none"></div>
+        {/* CSS Cinematic Reveal Wrapper */}
+        <div className={`absolute inset-0 transition-opacity duration-[2000ms] ease-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+          <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#0a110f_100%)] z-0 opacity-80 pointer-events-none"></div>
+        </div>
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-24 flex flex-col items-center">
+        <div className={`relative z-10 text-center px-6 max-w-5xl mx-auto pt-24 flex flex-col items-center transition-all duration-[1500ms] ease-out transform ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
           
-          <h2 className="text-aminah-gold/80 text-sm md:text-base font-sans tracking-[0.3em] uppercase mb-8 pointer-events-none">
+          <h2 className="text-aminah-gold/80 text-sm md:text-base font-sans tracking-[0.3em] uppercase mb-8 pointer-events-none transition-all duration-[2000ms] delay-300">
             An Institution for Qur&apos;anic Knowledge
           </h2>
           
@@ -212,13 +221,14 @@ export default function Home() {
             <span className="text-aminah-gold">Building a Safer Tomorrow.&quot;</span>
           </h1>
 
-          {/* NEW: About Aminah Button */}
+          {/* NEW: About Aminah Premium Ghost Button */}
           <div>
             <Link 
               href="/about" 
-              className="inline-flex items-center justify-center border border-aminah-gold/40 hover:border-aminah-gold bg-transparent hover:bg-aminah-gold/10 text-aminah-gold px-8 py-4 uppercase tracking-[0.2em] text-xs font-sans font-bold transition-all duration-500"
+              className="relative inline-flex items-center justify-center px-10 py-4 text-xs font-sans font-bold tracking-[0.2em] uppercase text-aminah-gold overflow-hidden border border-aminah-gold/40 hover:border-aminah-gold group transition-all duration-500"
             >
-              Know more About Aminah
+              <span className="absolute inset-0 w-full h-full bg-aminah-gold/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></span>
+              <span className="relative z-10 group-hover:text-aminah-ivory transition-colors duration-500">Know more About Aminah</span>
             </Link>
           </div>
 
@@ -226,51 +236,55 @@ export default function Home() {
       </section>
 
       {/* Direct Tabs */}
-      <section className="relative z-20 -mt-24 px-6 lg:px-12 max-w-[90rem] mx-auto">
+      <section className={`relative z-20 -mt-24 px-6 lg:px-12 max-w-[90rem] mx-auto transition-all duration-[1500ms] delay-500 transform ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link href="/bookstore" className="group bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-10 hover:bg-aminah-green transition-all duration-500 flex flex-col justify-between h-64">
-            <Book className="w-8 h-8 text-aminah-gold mb-6 group-hover:scale-110 transition-transform duration-500" />
-            <div>
+          <Link href="/bookstore" className="group bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-10 hover:border-aminah-gold/60 transition-all duration-700 flex flex-col justify-between h-64 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-aminah-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <Book className="w-8 h-8 text-aminah-gold mb-6 group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500 relative z-10" />
+            <div className="relative z-10">
               <p className="text-[10px] text-aminah-ivory/50 font-sans tracking-[0.2em] uppercase mb-2">Official</p>
               <h3 className="text-2xl text-aminah-ivory mb-4">Bookstore</h3>
               <div className="w-full h-px bg-aminah-gold/20 group-hover:bg-aminah-gold transition-colors relative">
-                <div className="absolute right-0 -top-2 text-aminah-gold opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-500">
+                <div className="absolute right-0 -top-2 text-aminah-gold opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-500">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
             </div>
           </Link>
-          <Link href="/library" className="group bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-10 hover:bg-aminah-green transition-all duration-500 flex flex-col justify-between h-64">
-            <Library className="w-8 h-8 text-aminah-gold mb-6 group-hover:scale-110 transition-transform duration-500" />
-            <div>
+          <Link href="/library" className="group bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-10 hover:border-aminah-gold/60 transition-all duration-700 flex flex-col justify-between h-64 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-aminah-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <Library className="w-8 h-8 text-aminah-gold mb-6 group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500 relative z-10" />
+            <div className="relative z-10">
               <p className="text-[10px] text-aminah-ivory/50 font-sans tracking-[0.2em] uppercase mb-2">Open Access</p>
               <h3 className="text-2xl text-aminah-ivory mb-4">Digital Library</h3>
               <div className="w-full h-px bg-aminah-gold/20 group-hover:bg-aminah-gold transition-colors relative">
-                <div className="absolute right-0 -top-2 text-aminah-gold opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-500">
+                <div className="absolute right-0 -top-2 text-aminah-gold opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-500">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
             </div>
           </Link>
-          <Link href="/explore" className="group bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-10 hover:bg-aminah-green transition-all duration-500 flex flex-col justify-between h-64">
-            <PenTool className="w-8 h-8 text-aminah-gold mb-6 group-hover:scale-110 transition-transform duration-500" />
-            <div>
+          <Link href="/explore" className="group bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-10 hover:border-aminah-gold/60 transition-all duration-700 flex flex-col justify-between h-64 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-aminah-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <PenTool className="w-8 h-8 text-aminah-gold mb-6 group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500 relative z-10" />
+            <div className="relative z-10">
               <p className="text-[10px] text-aminah-ivory/50 font-sans tracking-[0.2em] uppercase mb-2">Research</p>
               <h3 className="text-2xl text-aminah-ivory mb-4">Blogs & Articles</h3>
               <div className="w-full h-px bg-aminah-gold/20 group-hover:bg-aminah-gold transition-colors relative">
-                <div className="absolute right-0 -top-2 text-aminah-gold opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-500">
+                <div className="absolute right-0 -top-2 text-aminah-gold opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-500">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
             </div>
           </Link>
-          <Link href="/learning" className="group bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-10 hover:bg-aminah-green transition-all duration-500 flex flex-col justify-between h-64">
-            <GraduationCap className="w-8 h-8 text-aminah-gold mb-6 group-hover:scale-110 transition-transform duration-500" />
-            <div>
+          <Link href="/learning" className="group bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-10 hover:border-aminah-gold/60 transition-all duration-700 flex flex-col justify-between h-64 overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-aminah-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <GraduationCap className="w-8 h-8 text-aminah-gold mb-6 group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500 relative z-10" />
+            <div className="relative z-10">
               <p className="text-[10px] text-aminah-ivory/50 font-sans tracking-[0.2em] uppercase mb-2">Education</p>
               <h3 className="text-2xl text-aminah-ivory mb-4">Classes & Workshops</h3>
               <div className="w-full h-px bg-aminah-gold/20 group-hover:bg-aminah-gold transition-colors relative">
-                <div className="absolute right-0 -top-2 text-aminah-gold opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-500">
+                <div className="absolute right-0 -top-2 text-aminah-gold opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 duration-500">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
@@ -281,7 +295,7 @@ export default function Home() {
 
       {/* Qur'anic Foundation */}
       <section className="py-40 px-6 max-w-5xl mx-auto text-center">
-        <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-arabic text-aminah-green mb-16 leading-[1.8] font-bold" dir="rtl">
+        <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-arabic text-aminah-green mb-16 leading-[1.8] font-bold drop-shadow-sm" dir="rtl">
           وَضَرَبَ اللّٰهُ مَثَلًا قَرْيَةً كَانَتْ اٰمِنَةً مُّطْمَئِنَّةً يَّاْتِيْهَا رِزْقُهَا رَغَدًا مِّنْ كُلِّ مَكَانٍ فَكَفَرَتْ بِاَنْعُمِ اللّٰهِ فَاَذَاقَهَا اللّٰهُ لِبَاسَ الْجُوْعِ وَالْخَوْفِ بِمَا كَانُوْا يَصْنَعُوْنَ
         </h2>
         <div className="w-12 h-px bg-aminah-gold mx-auto mb-12"></div>
@@ -315,14 +329,14 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-20">
               {featuredBooks.map((book: any, index: number) => (
                 <Link href={`/bookstore/${book.id}`} key={book.id} className={`group cursor-pointer flex flex-col items-center ${index === 1 ? 'md:mt-12' : ''}`}>
-                  <div className="w-full aspect-[3/4] bg-aminah-green/20 border border-aminah-gold/20 mb-8 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 group-hover:shadow-[0_0_30px_rgba(197,164,109,0.1)] transition-all duration-700">
+                  <div className="w-full aspect-[3/4] bg-aminah-green/20 border border-aminah-gold/20 mb-8 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 group-hover:shadow-[0_0_40px_rgba(197,164,109,0.15)] transition-all duration-700">
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-80 z-10"></div>
                     
                     {/* Database Image Render */}
                     {book.image_url ? (
-                      <img src={book.image_url} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 z-0" />
+                      <img src={book.image_url} alt={book.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out z-0" />
                     ) : (
-                      <Book className="w-16 h-16 text-aminah-gold/30 group-hover:scale-110 transition-transform duration-700 z-0" />
+                      <Book className="w-16 h-16 text-aminah-gold/30 group-hover:scale-125 transition-transform duration-1000 ease-out z-0" />
                     )}
 
                     <div className="absolute top-4 right-4 z-20 bg-aminah-gold text-aminah-green text-[9px] font-sans font-bold px-2 py-1 tracking-[0.2em] uppercase">{book.format}</div>
