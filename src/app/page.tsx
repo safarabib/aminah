@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Book, Library, GraduationCap, PenTool, X } from "lucide-react";
 
-// Premium Quranic Quotes List - Exactly as requested
+// Premium Quranic Quotes List
 const quranicQuotes = [
   { text: "What has deceived you concerning your Lord, the Most Generous?", ref: "Surah Al-Infitar (82:6)" },
   { text: "Has the time not come for the hearts of believers to humble themselves at the remembrance of Allah?", ref: "Surah Al-Hadid (57:16)" },
@@ -23,17 +23,17 @@ const quranicQuotes = [
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // State for Dynamic Books and Popup
   const [featuredBooks, setFeaturedBooks] = useState<any[]>([]);
   const [quote, setQuote] = useState<{text: string, ref: string} | null>(null);
   const [showPopup, setShowPopup] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Cinematic Gateway Preloader State
+  const [appState, setAppState] = useState<"loading" | "revealing" | "ready">("loading");
+  
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // Ambient Torch Effect State
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
-  // Tilt States for Cards
+  // 3D Tilt States for Cards
   const [tiltStates, setTiltStates] = useState([
     { rotateX: 0, rotateY: 0 },
     { rotateX: 0, rotateY: 0 },
@@ -42,24 +42,20 @@ export default function Home() {
   ]);
 
   useEffect(() => {
-    // Trigger Cinematic Fade In
-    setTimeout(() => {
-      setIsLoaded(true);
-    }, 100);
+    // 1. Cinematic Entry Sequence (Logo Preloader)
+    setTimeout(() => setAppState("revealing"), 800);
+    setTimeout(() => setAppState("ready"), 2500);
 
-    // 1. Fetch Database Books - FILTERING FEATURED BOOKS
+    // 2. Fetch Featured Books from Database
     const fetchBooks = async () => {
       try {
         const res = await fetch("/api/books");
         const data = await res.json();
         if (Array.isArray(data)) {
-          // Check if any books have the 'is_featured' flag set to true
           const featured = data.filter((book: any) => book.is_featured);
-          
           if (featured.length > 0) {
              setFeaturedBooks(featured.slice(0, 3));
           } else {
-             // Fallback: If no books are featured, just show the first 3
              setFeaturedBooks(data.slice(0, 3)); 
           }
         }
@@ -69,14 +65,11 @@ export default function Home() {
     };
     fetchBooks();
 
-    // 2. Setup Random Quote
-    const randomQuote = quranicQuotes[Math.floor(Math.random() * quranicQuotes.length)];
-    setQuote(randomQuote);
-    
-    // Show popup with a premium delay
-    const timer = setTimeout(() => setShowPopup(true), 2500);
+    // 3. Setup Random Quote
+    setQuote(quranicQuotes[Math.floor(Math.random() * quranicQuotes.length)]);
+    const timer = setTimeout(() => setShowPopup(true), 4000);
 
-    // Track scroll for CSS reveals
+    // 4. Scroll Tracking
     const handleScroll = () => {
       const scrolled = window.scrollY;
       const maxScroll = document.body.scrollHeight - window.innerHeight;
@@ -123,7 +116,7 @@ export default function Home() {
     setTiltStates(newTilts);
   };
 
-  // Advanced Interactive Starry Sky Physics
+  // Original Fast Interactive Starry Sky Physics (Phone Touch + Mouse)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -136,8 +129,9 @@ export default function Home() {
     canvas.height = height;
 
     const stars: any[] = [];
-    const numStars = 800;
-    let localMouse = { x: -1000, y: -1000, active: false };
+    const numStars = 1200; // Increased Stars!
+    
+    let mouse = { x: -1000, y: -1000, active: false };
 
     for (let i = 0; i < numStars; i++) {
       stars.push({
@@ -152,16 +146,21 @@ export default function Home() {
     }
 
     const updateMousePos = (clientX: number, clientY: number) => {
-      localMouse.x = clientX;
-      localMouse.y = clientY;
-      localMouse.active = true;
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = clientX - rect.left;
+      mouse.y = clientY - rect.top;
+      mouse.active = true;
     };
 
     const handleMouseMove = (e: MouseEvent) => updateMousePos(e.clientX, e.clientY);
-    const handleLeave = () => { localMouse.active = false; };
+    const handleTouchMove = (e: TouchEvent) => updateMousePos(e.touches[0].clientX, e.touches[0].clientY);
+    const handleLeave = () => { mouse.active = false; };
 
+    // Added touch events back for Mobile
     window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("mouseout", handleLeave);
+    window.addEventListener("touchend", handleLeave);
     
     window.addEventListener("resize", () => {
       width = window.innerWidth;
@@ -171,23 +170,23 @@ export default function Home() {
     });
 
     const interactionRadius = 160; 
-    const forceMultiplier = 120; 
+    const forceMultiplier = 120; // Snappy physics restored
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
       
       stars.forEach((star) => {
         let targetX = star.baseX;
-        let targetY = star.baseY - (window.scrollY * star.speed); // Parallax Scroll
+        let targetY = star.baseY;
 
-        if (localMouse.active) {
-          const parallaxX = (localMouse.x - width / 2) * (star.speed * 0.5);
-          const parallaxY = (localMouse.y - height / 2) * (star.speed * 0.5);
+        if (mouse.active) {
+          const parallaxX = (mouse.x - width / 2) * star.speed;
+          const parallaxY = (mouse.y - height / 2) * star.speed;
           targetX -= parallaxX;
           targetY -= parallaxY;
 
-          const dx = star.x - localMouse.x;
-          const dy = (star.y + (window.scrollY * star.speed)) - localMouse.y;
+          const dx = star.x - mouse.x;
+          const dy = star.y - mouse.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < interactionRadius) {
@@ -218,20 +217,29 @@ export default function Home() {
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("mouseout", handleLeave);
+      window.removeEventListener("touchend", handleLeave);
     };
   }, []);
 
   return (
     <main className="bg-[#0a110f] text-aminah-charcoal selection:bg-aminah-gold selection:text-aminah-green font-serif relative overflow-x-hidden min-h-screen">
       
-      {/* THE READING TORCH (Ambient Mouse Glow) */}
+      {/* 1. THE GATEWAY PRE-LOADER */}
+      <div className={`fixed inset-0 z-[100] bg-[#050807] flex items-center justify-center transition-all duration-1000 pointer-events-none ${appState === "loading" ? "opacity-100" : appState === "revealing" ? "opacity-100" : "opacity-0"}`}>
+        <div className={`transition-all duration-1000 ease-out transform ${appState === "loading" ? "scale-95 opacity-0 blur-sm" : appState === "revealing" ? "scale-100 opacity-100 blur-0" : "scale-110 opacity-0 blur-md"}`}>
+          <img src="/logo.png" alt="AMINAH Logo" className="h-16 w-auto object-contain brightness-0 invert drop-shadow-[0_0_20px_rgba(197,164,109,0.5)]" />
+        </div>
+      </div>
+
+      {/* 2. THE READING TORCH (Ambient Mouse Glow) */}
       <div 
         className="fixed top-0 left-0 w-[600px] h-[600px] pointer-events-none z-0 rounded-full blur-[120px] transition-opacity duration-1000"
         style={{
           background: 'radial-gradient(circle, rgba(197,164,109,0.08) 0%, rgba(197,164,109,0) 70%)',
           transform: `translate(${mousePos.x - 300}px, ${mousePos.y - 300}px)`,
-          opacity: isLoaded ? 1 : 0
+          opacity: appState === "ready" ? 1 : 0
         }}
       />
 
@@ -256,21 +264,18 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden bg-[#0a110f]">
         
-        {/* CSS Cinematic Reveal Wrapper */}
-        <div className={`absolute inset-0 transition-opacity duration-[2000ms] ease-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+        {/* CSS Cinematic Reveal Wrapper - Deep Black Sky */}
+        <div className={`absolute inset-0 transition-opacity duration-[2000ms] ease-out ${appState === "ready" ? 'opacity-100' : 'opacity-0'}`}>
           <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#0a110f_100%)] z-0 opacity-90 pointer-events-none"></div>
-          {/* Subtle Film Grain Noise Overlay */}
-          <div className="absolute inset-0 opacity-[0.03] z-0 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")'}}></div>
         </div>
 
-        <div className={`relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center transition-all duration-[2000ms] ease-[cubic-bezier(0.16,1,0.3,1)] transform ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}>
+        <div className={`relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center transition-all duration-[2000ms] ease-[cubic-bezier(0.16,1,0.3,1)] transform ${appState === "ready" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}>
           
           <h2 className="text-aminah-gold/70 text-[10px] md:text-sm font-sans tracking-[0.4em] uppercase mb-8 pointer-events-none drop-shadow-[0_0_10px_rgba(197,164,109,0.3)]">
             An Institution for Qur&apos;anic Knowledge
           </h2>
           
-          {/* Aesthetic Switch Button for Proggamoy Quran */}
           <div className="flex justify-center mb-8">
             <Link 
               href="https://proggamoyquran.com/" 
@@ -294,7 +299,6 @@ export default function Home() {
             <span className="text-aminah-gold">Building a Safer Tomorrow.&quot;</span>
           </h1>
 
-          {/* NEW: About Aminah Premium Ghost Button */}
           <div>
             <Link 
               href="/about" 
@@ -309,9 +313,8 @@ export default function Home() {
       </section>
 
       {/* 3D MAGNETIC TILT CARDS */}
-      <section className={`relative z-20 -mt-32 px-6 lg:px-12 max-w-[90rem] mx-auto transition-all duration-[1500ms] delay-500 transform ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`} style={{ perspective: '1000px' }}>
+      <section className={`relative z-20 -mt-32 px-6 lg:px-12 max-w-[90rem] mx-auto transition-all duration-[1500ms] delay-500 transform ${appState === "ready" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`} style={{ perspective: '1000px' }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          
           {[
             { title: "Bookstore", sub: "Official", icon: Book, link: "/bookstore" },
             { title: "Digital Library", sub: "Open Access", icon: Library, link: "/library" },
@@ -330,7 +333,6 @@ export default function Home() {
                 boxShadow: tiltStates[i].rotateX !== 0 ? '0 30px 40px rgba(0,0,0,0.5)' : 'none'
               }}
             >
-              {/* Internal Glass Shine */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
               
               <item.icon 
@@ -349,16 +351,18 @@ export default function Home() {
               </div>
             </Link>
           ))}
-
         </div>
       </section>
 
-      {/* Qur'anic Foundation - UPDATED ARABIC TEXT TO GOLD */}
+      {/* Qur'anic Foundation - GLOWING GOLD TEXT UPDATE */}
       <section className="py-40 px-6 max-w-5xl mx-auto text-center relative z-10">
         <div className="transition-all duration-1000 ease-out" style={{ opacity: scrollProgress > 0.1 ? 1 : 0, transform: `translateY(${scrollProgress > 0.1 ? 0 : 40}px)` }}>
+          
+          {/* UPDATED: text-aminah-gold and drop-shadow added here */}
           <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-arabic text-aminah-gold mb-16 leading-[1.8] font-bold drop-shadow-[0_0_40px_rgba(197,164,109,0.2)]" dir="rtl">
             وَضَرَبَ اللّٰهُ مَثَلًا قَرْيَةً كَانَتْ اٰمِنَةً مُّطْمَئِنَّةً يَّاْتِيْهَا رِزْقُهَا رَغَدًا مِّنْ كُلِّ مَكَانٍ فَكَفَرَتْ بِاَنْعُمِ اللّٰهِ فَاَذَاقَهَا اللّٰهُ لِبَاسَ الْجُوْعِ وَالْخَوْفِ بِمَا كَانُوْا يَصْنَعُوْنَ
           </h2>
+          
           <div className="w-12 h-px bg-aminah-gold/50 mx-auto mb-12"></div>
           <p className="text-xl md:text-3xl text-aminah-ivory/80 italic mb-8 leading-relaxed">
             &ldquo;And Allah presents an example: a city which was safe and secure, its provision coming to it abundantly from every location. But it denied the favors of Allah, so Allah made it taste the garb of hunger and fear for what they used to do.&rdquo;
@@ -369,11 +373,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Publications - Dynamic Data Connection */}
+      {/* Featured Publications - Levitating Books */}
       <section className="py-32 bg-[#050807] text-aminah-ivory relative border-t border-aminah-gold/10 overflow-hidden">
-        {/* Subtle Noise for Dark Sections */}
-        <div className="absolute inset-0 opacity-[0.02] z-0 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")'}}></div>
-        
         <div className="max-w-[90rem] mx-auto px-6 lg:px-12 relative z-10">
           
           <div className="flex flex-col md:flex-row justify-between items-end mb-20 border-b border-aminah-gold/10 pb-8">
@@ -441,8 +442,6 @@ export default function Home() {
 
       {/* Newsletter Section */}
       <section id="newsletter" className="py-32 bg-[#faf9f6] border-t border-aminah-gold/20 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03] z-0 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")'}}></div>
-
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10 transition-all duration-1000" style={{ opacity: scrollProgress > 0.4 ? 1 : 0, transform: `translateY(${scrollProgress > 0.4 ? 0 : 30}px)` }}>
           <h2 className="text-4xl md:text-5xl text-aminah-green mb-6 font-serif">Stay Connected</h2>
           <p className="text-lg text-aminah-charcoal/70 italic mb-12 font-serif">
