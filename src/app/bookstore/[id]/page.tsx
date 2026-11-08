@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { Book, ShoppingCart, ArrowLeft, Star, ShieldCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AddToCartButton from "@/components/AddToCartButton"; // 1. IMPORT ADDED HERE
 
 export const dynamic = 'force-dynamic';
 
@@ -105,13 +106,10 @@ export default async function BookDetails(props: { params: Promise<{ id: string 
                 <p className="text-4xl text-aminah-ivory font-sans font-light tracking-wide">৳{book.price}</p>
               </div>
 
-              {/* Premium Add to Cart Button */}
-              <button className="relative inline-flex items-center justify-center px-12 py-5 text-xs font-sans font-bold tracking-[0.2em] uppercase text-[#0a110f] overflow-hidden bg-aminah-gold group transition-all duration-700 shadow-[0_0_40px_rgba(197,164,109,0.3)] hover:shadow-[0_0_60px_rgba(197,164,109,0.5)] hover:-translate-y-1 flex-1 sm:flex-none">
-                <span className="absolute inset-0 w-full h-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out"></span>
-                <span className="relative z-10 flex items-center gap-3">
-                  <ShoppingCart className="w-4 h-4" /> Add to Cart
-                </span>
-              </button>
+              {/* 2. ADD TO CART COMPONENT CONNECTED HERE */}
+              <div className="flex-1 sm:flex-none">
+                <AddToCartButton book={book} />
+              </div>
             </div>
 
             {/* Trust Badges */}

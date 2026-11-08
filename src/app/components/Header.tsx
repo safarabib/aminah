@@ -3,9 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
+import { useCart } from "@/context/CartContext"; // 1. IMPORTED LIVE CART
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // 2. EXTRACTED CART STATE
+  const { cartCount, setIsCartOpen } = useCart();
 
   return (
     <header className="fixed top-0 w-full z-50 bg-aminah-green/80 backdrop-blur-xl border-b border-aminah-gold/20 shadow-sm transition-all duration-500">
@@ -42,12 +46,24 @@ export default function Header() {
             <button className="text-aminah-ivory/80 hover:text-aminah-gold transition-colors">
               <Search className="w-5 h-5" />
             </button>
-            <Link href="/cart" className="text-aminah-ivory/80 hover:text-aminah-gold transition-colors relative" onClick={() => setIsMobileMenuOpen(false)}>
+            
+            {/* 3. CHANGED TO BUTTON FOR LIVE CART DRAWER */}
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsCartOpen(true);
+              }}
+              className="text-aminah-ivory/80 hover:text-aminah-gold transition-colors relative" 
+            >
               <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-1.5 -right-2 bg-aminah-gold text-aminah-green text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                0
-              </span>
-            </Link>
+              {/* Show badge only when cart has items */}
+              {cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-aminah-gold text-aminah-green text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
             <Link href="/admin" className="hidden md:flex items-center justify-center w-10 h-10 rounded-full border border-aminah-ivory/20 hover:border-aminah-gold text-aminah-ivory hover:text-aminah-gold transition-all">
               <User className="w-4 h-4" />
             </Link>
