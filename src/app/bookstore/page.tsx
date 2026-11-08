@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Book, ShoppingCart, Search, Loader2, Star } from "lucide-react";
+import { Book, Search, Loader2, Star } from "lucide-react";
+import AddToCartButton from "@/components/AddToCartButton"; // CONNECTED ADD TO CART BUTTON
 
 const CATEGORIES = [
   "All", "Qur’an & Mushaf", "Tafsir (Exegesis)", "Hadith", "Aqeedah (Islamic Creed)", 
@@ -22,7 +23,6 @@ export default function Bookstore() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // Cinematic Reveal Timer
     setTimeout(() => setIsLoaded(true), 150);
 
     fetch("/api/books")
@@ -48,7 +48,6 @@ export default function Bookstore() {
   return (
     <main className="min-h-screen bg-[#0a110f] text-aminah-ivory pt-32 pb-32 font-serif relative overflow-hidden">
       
-      {/* Cinematic Reveal Animation */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(30px); filter: blur(8px); }
@@ -60,12 +59,10 @@ export default function Bookstore() {
         .delay-300 { animation-delay: 300ms; }
       `}} />
 
-      {/* AMBIENT BACKGROUND GLOW (Subtle Aura) */}
       <div className={`absolute top-[-10%] left-[20%] w-[50vw] h-[50vw] bg-aminah-gold/5 rounded-full blur-[150px] pointer-events-none transition-opacity duration-[2000ms] ${isLoaded ? 'opacity-100' : 'opacity-0'} z-0`}></div>
 
       <div className={`max-w-[90rem] mx-auto px-6 lg:px-12 mb-16 relative z-10 ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-1000`}>
         
-        {/* HEADER SECTION */}
         <div className="flex flex-col lg:flex-row justify-between items-end border-b border-aminah-gold/10 pb-12 gap-10 reveal-item">
           <div className="w-full lg:w-auto">
             <p className="text-aminah-gold text-[10px] font-sans tracking-[0.3em] uppercase mb-4 flex items-center gap-2">
@@ -77,7 +74,6 @@ export default function Bookstore() {
             </p>
           </div>
           
-          {/* Live Search & Filter Options */}
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto mt-6 lg:mt-0">
             <div className="relative w-full sm:w-72">
               <input 
@@ -108,7 +104,6 @@ export default function Bookstore() {
         </div>
       </div>
       
-      {/* BOOKS GRID */}
       <div className="max-w-[90rem] mx-auto px-6 lg:px-12 relative z-10">
         {loading ? (
           <div className="flex flex-col justify-center items-center py-40 reveal-item delay-100">
@@ -126,8 +121,7 @@ export default function Bookstore() {
             {filteredBooks.map((book: any, index: number) => (
               <div key={book.id} className="group flex flex-col h-full">
                 
-                {/* Book Cover Container */}
-                <Link href={`/bookstore/${book.id}`} className="w-full aspect-[3/4] bg-[#111c19] border border-aminah-gold/10 mb-6 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 transition-all duration-700 cursor-pointer shadow-[0_10px_30px_rgba(0,0,0,0.5)] group-hover:shadow-[0_20px_40px_rgba(197,164,109,0.15)]">
+                <Link href={`/bookstore/${book.id}`} className="w-full aspect-[3/4] bg-[#111c19] border border-aminah-gold/10 mb-6 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 transition-all duration-700 cursor-pointer shadow-[0_10px_30px_rgba(0,0,0,0.5)] group-hover:shadow-[0_20px_40px_rgba(197,164,109,0.15)] block">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-60 z-10 pointer-events-none"></div>
                   
                   {book.image_url ? (
@@ -136,7 +130,6 @@ export default function Bookstore() {
                     <Book className="w-16 h-16 text-aminah-gold/20 group-hover:scale-110 transition-transform duration-[1500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] z-0" />
                   )}
                   
-                  {/* Featured Badge */}
                   {book.is_featured && (
                     <div className="absolute top-4 left-4 z-20 bg-[#0a110f]/80 backdrop-blur-md border border-aminah-gold/30 p-1.5 rounded-full shadow-lg">
                       <Star className="w-3 h-3 text-aminah-gold fill-aminah-gold" />
@@ -148,23 +141,24 @@ export default function Bookstore() {
                   </div>
                 </Link>
 
-                {/* Typography Area */}
                 <div className="flex-grow flex flex-col px-2">
                   <p className="text-aminah-gold/60 text-[9px] font-sans tracking-[0.2em] uppercase mb-3">{book.category}</p>
                   
-                  <Link href={`/bookstore/${book.id}`}>
+                  <Link href={`/bookstore/${book.id}`} className="block cursor-pointer">
                     <h3 className="text-xl md:text-2xl font-serif text-aminah-ivory mb-2 group-hover:text-aminah-gold transition-colors leading-snug line-clamp-2">{book.title}</h3>
                   </Link>
                   
                   <p className="text-aminah-ivory/50 font-serif italic text-sm mb-1">By {book.author || "Aminah Institute"}</p>
                   <p className="text-aminah-gold/40 font-sans tracking-widest text-[9px] uppercase mb-6">Pub: {book.publisher || "AMINAH Publications"}</p>
                   
-                  {/* Price & Cart Area */}
+                  {/* REPLACED WITH FUNCTIONAL ADD TO CART BUTTON (Minimal Style version) */}
                   <div className="mt-auto flex items-center justify-between border-t border-aminah-gold/10 pt-5">
                     <p className="text-aminah-gold font-sans tracking-widest text-lg font-light">৳{book.price}</p>
-                    <button className="text-[#0a110f] bg-aminah-gold hover:bg-aminah-ivory transition-all duration-300 p-3 shadow-lg hover:shadow-[0_0_15px_rgba(197,164,109,0.4)] hover:-translate-y-0.5 rounded-sm">
-                      <ShoppingCart className="w-4 h-4" />
-                    </button>
+                    
+                    <div className="w-12 h-12">
+                      {/* We use our main component but styled for grid */}
+                      <AddToCartButton book={book} />
+                    </div>
                   </div>
                 </div>
 

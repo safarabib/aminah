@@ -27,13 +27,11 @@ export default function Home() {
   const [quote, setQuote] = useState<{text: string, ref: string} | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   
-  // Cinematic Gateway Preloader State
   const [appState, setAppState] = useState<"loading" | "revealing" | "ready">("loading");
   
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // 3D Tilt States for Cards
   const [tiltStates, setTiltStates] = useState([
     { rotateX: 0, rotateY: 0 },
     { rotateX: 0, rotateY: 0 },
@@ -42,11 +40,9 @@ export default function Home() {
   ]);
 
   useEffect(() => {
-    // 1. Cinematic Entry Sequence (Logo Preloader)
     setTimeout(() => setAppState("revealing"), 800);
     setTimeout(() => setAppState("ready"), 2500);
 
-    // 2. Fetch Featured Books from Database
     const fetchBooks = async () => {
       try {
         const res = await fetch("/api/books");
@@ -65,11 +61,9 @@ export default function Home() {
     };
     fetchBooks();
 
-    // 3. Setup Random Quote
     setQuote(quranicQuotes[Math.floor(Math.random() * quranicQuotes.length)]);
     const timer = setTimeout(() => setShowPopup(true), 4000);
 
-    // 4. Scroll Tracking
     const handleScroll = () => {
       const scrolled = window.scrollY;
       const maxScroll = document.body.scrollHeight - window.innerHeight;
@@ -83,7 +77,6 @@ export default function Home() {
     };
   }, []);
 
-  // Ambient Glow Tracker
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -92,7 +85,6 @@ export default function Home() {
     return () => window.removeEventListener("mousemove", handleGlobalMouseMove);
   }, []);
 
-  // 3D Tilt Logic
   const handleCardMouseMove = (e: React.MouseEvent<HTMLAnchorElement>, index: number) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -116,7 +108,6 @@ export default function Home() {
     setTiltStates(newTilts);
   };
 
-  // Original Fast Interactive Starry Sky Physics (Phone Touch + Mouse)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -129,7 +120,7 @@ export default function Home() {
     canvas.height = height;
 
     const stars: any[] = [];
-    const numStars = 1200; // Increased Stars!
+    const numStars = 1200; 
     
     let mouse = { x: -1000, y: -1000, active: false };
 
@@ -156,7 +147,6 @@ export default function Home() {
     const handleTouchMove = (e: TouchEvent) => updateMousePos(e.touches[0].clientX, e.touches[0].clientY);
     const handleLeave = () => { mouse.active = false; };
 
-    // Added touch events back for Mobile
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("mouseout", handleLeave);
@@ -170,7 +160,7 @@ export default function Home() {
     });
 
     const interactionRadius = 160; 
-    const forceMultiplier = 120; // Snappy physics restored
+    const forceMultiplier = 120; 
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
@@ -226,14 +216,12 @@ export default function Home() {
   return (
     <main className="bg-[#0a110f] text-aminah-charcoal selection:bg-aminah-gold selection:text-aminah-green font-serif relative overflow-x-hidden min-h-screen">
       
-      {/* 1. THE GATEWAY PRE-LOADER */}
       <div className={`fixed inset-0 z-[100] bg-[#050807] flex items-center justify-center transition-all duration-1000 pointer-events-none ${appState === "loading" ? "opacity-100" : appState === "revealing" ? "opacity-100" : "opacity-0"}`}>
         <div className={`transition-all duration-1000 ease-out transform ${appState === "loading" ? "scale-95 opacity-0 blur-sm" : appState === "revealing" ? "scale-100 opacity-100 blur-0" : "scale-110 opacity-0 blur-md"}`}>
           <img src="/logo.png" alt="AMINAH Logo" className="h-16 w-auto object-contain brightness-0 invert drop-shadow-[0_0_20px_rgba(197,164,109,0.5)]" />
         </div>
       </div>
 
-      {/* 2. THE READING TORCH (Ambient Mouse Glow) */}
       <div 
         className="fixed top-0 left-0 w-[600px] h-[600px] pointer-events-none z-0 rounded-full blur-[120px] transition-opacity duration-1000"
         style={{
@@ -243,7 +231,6 @@ export default function Home() {
         }}
       />
 
-      {/* Aesthetic Quranic Popup */}
       <div className={`fixed bottom-8 right-8 z-50 transition-all duration-1000 transform ${showPopup ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
         {quote && (
           <div className="bg-[#0a110f]/95 backdrop-blur-md border border-aminah-gold/30 p-6 shadow-[0_0_40px_rgba(197,164,109,0.15)] max-w-sm relative group overflow-hidden">
@@ -261,10 +248,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* Hero Section */}
       <section className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden bg-[#0a110f]">
         
-        {/* CSS Cinematic Reveal Wrapper - Deep Black Sky */}
         <div className={`absolute inset-0 transition-opacity duration-[2000ms] ease-out ${appState === "ready" ? 'opacity-100' : 'opacity-0'}`}>
           <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_#0a110f_100%)] z-0 opacity-90 pointer-events-none"></div>
@@ -312,7 +297,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3D MAGNETIC TILT CARDS */}
       <section className={`relative z-20 -mt-32 px-6 lg:px-12 max-w-[90rem] mx-auto transition-all duration-[1500ms] delay-500 transform ${appState === "ready" ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`} style={{ perspective: '1000px' }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
@@ -354,11 +338,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Qur'anic Foundation - GLOWING GOLD TEXT UPDATE */}
       <section className="py-40 px-6 max-w-5xl mx-auto text-center relative z-10">
         <div className="transition-all duration-1000 ease-out" style={{ opacity: scrollProgress > 0.1 ? 1 : 0, transform: `translateY(${scrollProgress > 0.1 ? 0 : 40}px)` }}>
           
-          {/* UPDATED: text-aminah-gold and drop-shadow added here */}
           <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-arabic text-aminah-gold mb-16 leading-[1.8] font-bold drop-shadow-[0_0_40px_rgba(197,164,109,0.2)]" dir="rtl">
             وَضَرَبَ اللّٰهُ مَثَلًا قَرْيَةً كَانَتْ اٰمِنَةً مُّطْمَئِنَّةً يَّاْتِيْهَا رِزْقُهَا رَغَدًا مِّنْ كُلِّ مَكَانٍ فَكَفَرَتْ بِاَنْعُمِ اللّٰهِ فَاَذَاقَهَا اللّٰهُ لِبَاسَ الْجُوْعِ وَالْخَوْفِ بِمَا كَانُوْا يَصْنَعُوْنَ
           </h2>
@@ -373,7 +355,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Publications - Levitating Books */}
       <section className="py-32 bg-[#050807] text-aminah-ivory relative border-t border-aminah-gold/10 overflow-hidden">
         <div className="max-w-[90rem] mx-auto px-6 lg:px-12 relative z-10">
           
@@ -405,10 +386,9 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-20">
               {featuredBooks.map((book: any, index: number) => (
-                <Link 
-                  href={`/bookstore/${book.id}`} 
+                <div 
                   key={book.id} 
-                  className={`group cursor-pointer flex flex-col items-center transition-all duration-700 ease-out ${
+                  className={`group flex flex-col items-center transition-all duration-700 ease-out z-10 relative ${
                     index === 1 ? 'md:mt-12 book-levitate-delay' : index === 2 ? 'book-levitate-delay-2' : 'book-levitate'
                   }`}
                   style={{ 
@@ -416,31 +396,35 @@ export default function Home() {
                     transform: `translateY(${scrollProgress > 0.25 ? 0 : 50}px)` 
                   }}
                 >
-                  <div className="w-full aspect-[3/4] bg-[#0a110f] border border-aminah-gold/10 mb-8 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 group-hover:shadow-[0_30px_50px_rgba(197,164,109,0.15)] transition-all duration-700">
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-80 z-10 pointer-events-none"></div>
-                    
-                    {book.image_url ? (
-                      <img src={book.image_url} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] z-0" />
-                    ) : (
-                      <Book className="w-16 h-16 text-aminah-gold/30 group-hover:scale-110 transition-transform duration-[1500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] z-0" />
-                    )}
+                  <Link href={`/bookstore/${book.id}`} className="w-full relative z-20 cursor-pointer block">
+                    <div className="w-full aspect-[3/4] bg-[#0a110f] border border-aminah-gold/10 mb-8 relative overflow-hidden flex items-center justify-center group-hover:border-aminah-gold/50 group-hover:shadow-[0_30px_50px_rgba(197,164,109,0.15)] transition-all duration-700">
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-80 z-10 pointer-events-none"></div>
+                      
+                      {book.image_url ? (
+                        <img src={book.image_url} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] z-0" />
+                      ) : (
+                        <Book className="w-16 h-16 text-aminah-gold/30 group-hover:scale-110 transition-transform duration-[1500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)] z-0" />
+                      )}
 
-                    <div className="absolute top-4 right-4 z-20 bg-aminah-gold/90 backdrop-blur-sm text-aminah-green text-[9px] font-sans font-bold px-3 py-1.5 tracking-[0.2em] uppercase rounded-sm">{book.format}</div>
-                  </div>
+                      <div className="absolute top-4 right-4 z-20 bg-aminah-gold/90 backdrop-blur-sm text-aminah-green text-[9px] font-sans font-bold px-3 py-1.5 tracking-[0.2em] uppercase rounded-sm">{book.format}</div>
+                    </div>
+                  </Link>
+
                   <div className="text-center w-full relative z-20">
-                    <h3 className="text-2xl font-serif text-aminah-ivory mb-2 group-hover:text-aminah-gold transition-colors">{book.title}</h3>
+                    <Link href={`/bookstore/${book.id}`} className="cursor-pointer block">
+                      <h3 className="text-2xl font-serif text-aminah-ivory mb-2 group-hover:text-aminah-gold transition-colors">{book.title}</h3>
+                    </Link>
                     <p className="text-aminah-ivory/40 font-serif italic mb-4">{book.author}</p>
                     <div className="w-8 h-px bg-aminah-gold/30 mx-auto mb-4 group-hover:w-16 transition-all duration-500"></div>
                     <p className="text-aminah-gold/90 font-sans tracking-widest text-sm">৳{book.price}</p>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
         </div>
       </section>
 
-      {/* Newsletter Section */}
       <section id="newsletter" className="py-32 bg-[#faf9f6] border-t border-aminah-gold/20 relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10 transition-all duration-1000" style={{ opacity: scrollProgress > 0.4 ? 1 : 0, transform: `translateY(${scrollProgress > 0.4 ? 0 : 30}px)` }}>
           <h2 className="text-4xl md:text-5xl text-aminah-green mb-6 font-serif">Stay Connected</h2>

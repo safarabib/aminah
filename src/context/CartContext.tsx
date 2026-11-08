@@ -2,9 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ShoppingCart, X, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
-import Link from "next/link"; // 1. IMPORT LINK FOR CHECKOUT
+import { useRouter } from "next/navigation"; // 1. IMPORTED ROUTER
 
-// Definitions
 export interface CartItem {
   id: string;
   title: string;
@@ -31,8 +30,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter(); // 2. INITIALIZED ROUTER
 
-  // Load cart from LocalStorage when app starts
   useEffect(() => {
     setIsMounted(true);
     const savedCart = localStorage.getItem("aminah_cart");
@@ -41,7 +40,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Save to LocalStorage whenever cart changes
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem("aminah_cart", JSON.stringify(cartItems));
@@ -56,7 +54,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, { ...item, quantity: 1 }];
     });
-    setIsCartOpen(true); // Auto open cart when adding
+    setIsCartOpen(true);
   };
 
   const removeFromCart = (id: string) => {
@@ -75,20 +73,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, cartTotal, isCartOpen, setIsCartOpen, cartCount }}>
       {children}
 
-      {/* --- CINEMATIC SIDE DRAWER (CART UI) --- */}
       {isMounted && (
         <div className={`fixed inset-0 z-[100] pointer-events-none transition-opacity duration-500 ${isCartOpen ? "opacity-100" : "opacity-0"}`}>
           
-          {/* Blur Backdrop */}
           <div 
             className={`absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto transition-opacity duration-500 ${isCartOpen ? "opacity-100" : "opacity-0"}`} 
             onClick={() => setIsCartOpen(false)}
           ></div>
 
-          {/* Cart Panel */}
           <div className={`absolute top-0 right-0 h-full w-full sm:w-[400px] bg-[#0a110f] border-l border-aminah-gold/20 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto transform transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isCartOpen ? "translate-x-0" : "translate-x-full"}`}>
             
-            {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-aminah-gold/10">
               <div className="flex items-center gap-3 text-aminah-gold">
                 <ShoppingCart className="w-5 h-5" />
@@ -98,7 +92,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               <button onClick={() => setIsCartOpen(false)} className="text-aminah-gold/50 hover:text-aminah-gold transition-colors p-2"><X className="w-5 h-5" /></button>
             </div>
 
-            {/* Cart Items */}
             <div className="flex-grow overflow-y-auto p-6 space-y-6 scrollbar-hide">
               {cartItems.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
@@ -115,8 +108,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       <h4 className="text-aminah-ivory font-serif leading-tight mb-2 line-clamp-2 text-sm">{item.title}</h4>
                       <div className="flex items-center justify-between mt-auto">
                         <p className="text-aminah-gold font-sans text-sm">৳{item.price}</p>
-                        
-                        {/* Quantity Controls */}
                         <div className="flex items-center gap-3 bg-[#0a110f] border border-aminah-gold/20 px-2 py-1">
                           <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-aminah-gold/50 hover:text-aminah-gold"><Minus className="w-3 h-3" /></button>
                           <span className="text-aminah-ivory text-xs font-sans w-3 text-center">{item.quantity}</span>
@@ -124,7 +115,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                         </div>
                       </div>
                     </div>
-                    {/* Delete Button */}
                     <button onClick={() => removeFromCart(item.id)} className="absolute -top-2 -right-2 bg-red-900/80 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-700">
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -133,7 +123,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            {/* Footer / Checkout */}
             {cartItems.length > 0 && (
               <div className="p-6 border-t border-aminah-gold/10 bg-[#0a110f] z-10">
                 <div className="flex justify-between items-center mb-6">
@@ -141,14 +130,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   <span className="text-2xl font-serif text-aminah-gold">৳{cartTotal}</span>
                 </div>
                 
-                {/* 2. CHANGED BUTTON TO LINK */}
-                <Link 
-                  href="/checkout"
-                  onClick={() => setIsCartOpen(false)}
-                  className="w-full bg-aminah-gold text-aminah-green py-4 font-sans font-bold tracking-[0.2em] uppercase text-xs hover:bg-aminah-ivory transition-colors flex items-center justify-center gap-2 group"
+                {/* 3. CHANGED TO BUTTON WITH ROUTER.PUSH */}
+                <button 
+                  onClick={() => {
+                    setIsCartOpen(false);
+                    router.push("/checkout");
+                  }}
+                  className="w-full bg-aminah-gold text-aminah-green py-4 font-sans font-bold tracking-[0.2em] uppercase text-xs hover:bg-aminah-ivory transition-colors flex items-center justify-center gap-2 group cursor-pointer"
                 >
                   Proceed to Checkout <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                </button>
                 
               </div>
             )}
