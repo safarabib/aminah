@@ -353,14 +353,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Qur'anic Foundation */}
+      {/* Qur'anic Foundation - UPDATED ARABIC TEXT TO GOLD */}
       <section className="py-40 px-6 max-w-5xl mx-auto text-center relative z-10">
         <div className="transition-all duration-1000 ease-out" style={{ opacity: scrollProgress > 0.1 ? 1 : 0, transform: `translateY(${scrollProgress > 0.1 ? 0 : 40}px)` }}>
-          <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-arabic text-aminah-green mb-16 leading-[1.8] font-bold drop-shadow-sm" dir="rtl">
+          <h2 className="text-5xl md:text-7xl lg:text-[5.5rem] font-arabic text-aminah-gold mb-16 leading-[1.8] font-bold drop-shadow-[0_0_40px_rgba(197,164,109,0.2)]" dir="rtl">
             وَضَرَبَ اللّٰهُ مَثَلًا قَرْيَةً كَانَتْ اٰمِنَةً مُّطْمَئِنَّةً يَّاْتِيْهَا رِزْقُهَا رَغَدًا مِّنْ كُلِّ مَكَانٍ فَكَفَرَتْ بِاَنْعُمِ اللّٰهِ فَاَذَاقَهَا اللّٰهُ لِبَاسَ الْجُوْعِ وَالْخَوْفِ بِمَا كَانُوْا يَصْنَعُوْنَ
           </h2>
-          <div className="w-12 h-px bg-aminah-gold mx-auto mb-12"></div>
-          <p className="text-xl md:text-3xl text-aminah-charcoal/80 italic mb-8 leading-relaxed">
+          <div className="w-12 h-px bg-aminah-gold/50 mx-auto mb-12"></div>
+          <p className="text-xl md:text-3xl text-aminah-ivory/80 italic mb-8 leading-relaxed">
             &ldquo;And Allah presents an example: a city which was safe and secure, its provision coming to it abundantly from every location. But it denied the favors of Allah, so Allah made it taste the garb of hunger and fear for what they used to do.&rdquo;
           </p>
           <p className="text-xs font-sans font-bold text-aminah-gold tracking-[0.3em] uppercase">
