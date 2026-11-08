@@ -5,16 +5,22 @@ import { notFound } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
-export default async function BookDetails({ params }: { params: { id: string } }) {
-  // 100% Locked Existing Data Fetching Logic
+// FIXED FOR NEXT.JS 15: params is now unwrapped safely as a Promise
+export default async function BookDetails(props: { params: Promise<{ id: string }> }) {
+  
+  // 1. Safely await the params object
+  const params = await props.params;
+  
+  // 2. Fetch data using the exact id
   const { data: book } = await supabase.from('books').select('*').eq('id', params.id).single();
   
+  // 3. If book doesn't exist, only then throw 404
   if (!book) return notFound();
 
   return (
     <main className="min-h-screen bg-[#0a110f] text-aminah-charcoal selection:bg-aminah-gold selection:text-aminah-green font-serif relative overflow-hidden pt-32 pb-32">
       
-      {/* Pure CSS Cinematic Animations (No Client JS Required) */}
+      {/* Pure CSS Cinematic Animations */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes slowFloat {
           0% { transform: translateY(0px); }
@@ -90,7 +96,7 @@ export default async function BookDetails({ params }: { params: { id: string } }
             <div className="w-12 h-px bg-aminah-gold/40 mb-8"></div>
 
             <p className="text-lg md:text-xl text-aminah-ivory/80 leading-relaxed mb-10 font-serif italic">
-              {book.description || "A profound exploration of Islamic knowledge, beautifully bound and curated for the sincere seeker of truth. This publication serves as a guiding light for building a safer tomorrow."}
+              {book.description || "A profound exploration of Islamic knowledge, beautifully bound and curated for the sincere seeker of truth."}
             </p>
 
             <div className="flex flex-col sm:flex-row sm:items-end gap-8 mb-12">
