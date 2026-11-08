@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ShoppingCart, X, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
+import Link from "next/link"; // 1. IMPORT LINK FOR CHECKOUT
 
 // Definitions
 export interface CartItem {
@@ -139,9 +140,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   <span className="text-aminah-ivory/60 font-sans text-xs tracking-widest uppercase">Subtotal</span>
                   <span className="text-2xl font-serif text-aminah-gold">৳{cartTotal}</span>
                 </div>
-                <button className="w-full bg-aminah-gold text-aminah-green py-4 font-sans font-bold tracking-[0.2em] uppercase text-xs hover:bg-aminah-ivory transition-colors flex items-center justify-center gap-2 group">
+                
+                {/* 2. CHANGED BUTTON TO LINK */}
+                <Link 
+                  href="/checkout"
+                  onClick={() => setIsCartOpen(false)}
+                  className="w-full bg-aminah-gold text-aminah-green py-4 font-sans font-bold tracking-[0.2em] uppercase text-xs hover:bg-aminah-ivory transition-colors flex items-center justify-center gap-2 group"
+                >
                   Proceed to Checkout <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                </Link>
+                
               </div>
             )}
           </div>
