@@ -123,6 +123,21 @@ export default function AdminDashboard() {
     }
   };
 
+  // ADDED Function to Update Order Status
+  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: newStatus })
+      .eq('id', orderId);
+
+    if (error) {
+      alert("Failed to update status");
+      console.error(error);
+    } else {
+      fetchOrders(); // Refresh order list silently to show new status
+    }
+  };
+
   // ADDED Date format function
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { 
@@ -324,7 +339,7 @@ export default function AdminDashboard() {
                       <th className="p-4 border-b border-aminah-gold/10">Customer Details</th>
                       <th className="p-4 border-b border-aminah-gold/10">Ordered Items</th>
                       <th className="p-4 border-b border-aminah-gold/10">Total Amount</th>
-                      <th className="p-4 border-b border-aminah-gold/10">Status</th>
+                      <th className="p-4 border-b border-aminah-gold/10 text-center">Status Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -357,17 +372,27 @@ export default function AdminDashboard() {
                           <p className="text-aminah-ivory/40 font-sans text-[9px] uppercase tracking-widest">{order.payment_method}</p>
                         </td>
                         
-                        <td className="p-4">
-                          {order.status === 'pending' ? (
-                            <span className="inline-flex items-center gap-1.5 bg-yellow-900/30 text-yellow-500 border border-yellow-700/50 px-2.5 py-1 rounded-full text-[9px] font-sans font-bold tracking-widest uppercase">
-                              <Clock className="w-3 h-3" /> Pending
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 bg-green-900/30 text-green-500 border border-green-700/50 px-2.5 py-1 rounded-full text-[9px] font-sans font-bold tracking-widest uppercase">
-                              <CheckCircle className="w-3 h-3" /> Completed
-                            </span>
-                          )}
+                        {/* DYNAMIC STATUS DROPDOWN ADDED HERE */}
+                        <td className="p-4 text-center">
+                          <select 
+                            value={order.status || 'pending'}
+                            onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
+                            className={`appearance-none outline-none cursor-pointer border px-4 py-1.5 rounded-full text-[9px] font-sans font-bold tracking-widest uppercase transition-colors text-center shadow-md
+                              ${
+                                order.status === 'delivered' ? 'bg-green-900/30 text-green-500 border-green-700/50' :
+                                order.status === 'processing' ? 'bg-blue-900/30 text-blue-500 border-blue-700/50' :
+                                order.status === 'cancelled' ? 'bg-red-900/30 text-red-500 border-red-700/50' :
+                                'bg-yellow-900/30 text-yellow-500 border-yellow-700/50' // default pending
+                              }
+                            `}
+                          >
+                            <option value="pending" className="bg-[#111c19] text-yellow-500">PENDING</option>
+                            <option value="processing" className="bg-[#111c19] text-blue-500">PROCESSING</option>
+                            <option value="delivered" className="bg-[#111c19] text-green-500">DELIVERED</option>
+                            <option value="cancelled" className="bg-[#111c19] text-red-500">CANCELLED</option>
+                          </select>
                         </td>
+
                       </tr>
                     ))}
                   </tbody>
