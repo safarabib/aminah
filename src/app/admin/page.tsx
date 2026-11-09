@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star } from "lucide-react";
+import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star, Package, Clock, CheckCircle, Search, Eye } from "lucide-react";
 import { supabase } from "@/lib/supabase"; 
 
 // Centralized Professional Category List
@@ -32,9 +32,12 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  const [activeTab, setActiveTab] = useState<"books" | "library">("books");
+  // ADDED "orders" to activeTab states
+  const [activeTab, setActiveTab] = useState<"books" | "library" | "orders">("orders");
+  
   const [books, setBooks] = useState<any[]>([]);
   const [libraryItems, setLibraryItems] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]); // ADDED state for orders
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -52,7 +55,7 @@ export default function AdminDashboard() {
   const [bookFormat, setBookFormat] = useState("Paperback");
   const [bookDesc, setBookDesc] = useState("");
   const [bookImage, setBookImage] = useState("");
-  const [bookIsFeatured, setBookIsFeatured] = useState(false); // NEW: Featured State
+  const [bookIsFeatured, setBookIsFeatured] = useState(false);
 
   // Form states - Library
   const [libTitle, setLibTitle] = useState("");
@@ -69,6 +72,7 @@ export default function AdminDashboard() {
     if (auth === "true") {
       setIsAuthenticated(true);
       fetchData();
+      fetchOrders(); // ADDED fetchOrders call
     }
   }, []);
 
@@ -78,6 +82,7 @@ export default function AdminDashboard() {
       sessionStorage.setItem("adminAuth", "true");
       setIsAuthenticated(true);
       fetchData();
+      fetchOrders(); // ADDED fetchOrders call
     } else {
       setLoginError("Invalid password. Please try again.");
     }
@@ -104,6 +109,29 @@ export default function AdminDashboard() {
     }
   };
 
+  // ADDED Fetch Orders function
+  const fetchOrders = async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching orders:", error);
+    } else {
+      setOrders(data || []);
+    }
+  };
+
+  // ADDED Date format function
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', month: 'short', day: 'numeric', 
+      hour: '2-digit', minute: '2-digit' 
+    };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
   const resetForm = () => {
     setIsEditing(false);
     setEditingId(null);
@@ -124,7 +152,7 @@ export default function AdminDashboard() {
       setBookFormat(item.format || "Paperback");
       setBookDesc(item.description || "");
       setBookImage(item.image_url || "");
-      setBookIsFeatured(item.is_featured || false); // Load featured state
+      setBookIsFeatured(item.is_featured || false);
     } else {
       setActiveTab("library");
       setLibTitle(item.title);
@@ -179,7 +207,7 @@ export default function AdminDashboard() {
       format: bookFormat, 
       description: bookDesc, 
       image_url: bookImage,
-      is_featured: bookIsFeatured // Pass featured state to API
+      is_featured: bookIsFeatured
     };
     
     await fetch("/api/books", {
@@ -250,191 +278,275 @@ export default function AdminDashboard() {
   // --- ADMIN DASHBOARD ---
   return (
     <div className="min-h-screen bg-[#0a110f] text-aminah-ivory pt-32 pb-20 px-6 font-serif">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-[90rem] mx-auto">
+        
+        {/* Header Tabs */}
         <div className="mb-12 border-b border-aminah-gold/20 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h1 className="text-4xl text-aminah-gold mb-2">Super Admin Dashboard</h1>
             <p className="text-aminah-ivory/60 italic font-sans text-sm tracking-widest uppercase">Platform Management (Supabase DB)</p>
           </div>
-          <div className="flex gap-4 font-sans text-sm tracking-widest uppercase items-center">
+          <div className="flex flex-wrap gap-4 font-sans text-sm tracking-widest uppercase items-center">
+            
+            {/* ADDED Orders Tab */}
+            <button onClick={() => {setActiveTab("orders"); fetchOrders();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "orders" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Package className="w-4 h-4" /> Orders</button>
+            
             <button onClick={() => {setActiveTab("books"); resetForm();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "books" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Book className="w-4 h-4" /> Books</button>
+            
             <button onClick={() => {setActiveTab("library"); resetForm();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "library" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Library className="w-4 h-4" /> Library</button>
+            
             <button onClick={handleLogout} className="ml-4 text-aminah-gold/70 hover:text-red-500 transition-colors"><LogOut className="w-5 h-5" /></button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Left Form Column */}
-          <div className="lg:col-span-1 bg-[#111c19] border border-aminah-gold/20 p-8 h-fit">
-            <div className="flex items-center gap-3 mb-6 border-b border-aminah-gold/10 pb-4">
-              {isEditing ? <Edit className="w-5 h-5 text-aminah-gold" /> : <Plus className="w-5 h-5 text-aminah-gold" />}
-              <h2 className="text-xl">{isEditing ? "Edit" : "Add New"} {activeTab === "books" ? "Book" : "Library Item"}</h2>
-            </div>
-            
-            {/* BOOKS FORM */}
-            {activeTab === "books" && (
-              <form onSubmit={handleSaveBook} className="space-y-5 font-sans">
-                <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Book Title</label><input type="text" required value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={bookAuthor} onChange={(e) => setBookAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
-                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Publisher</label><input type="text" required value={bookPublisher} onChange={(e) => setBookPublisher(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
-                </div>
-
-                {/* Image Upload Area */}
-                <div>
-                  <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Cover Image</label>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Image URL..." value={bookImage} onChange={(e) => setBookImage(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory text-sm focus:outline-none focus:border-aminah-gold" />
-                    <label className="bg-aminah-gold/10 border border-aminah-gold/30 p-3 cursor-pointer hover:bg-aminah-gold/20 flex items-center justify-center min-w-[50px] transition-colors">
-                      {uploading ? <Loader2 className="w-4 h-4 animate-spin text-aminah-gold" /> : <UploadCloud className="w-5 h-5 text-aminah-gold" />}
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'book-covers')} disabled={uploading} />
-                    </label>
-                  </div>
-                  {bookImage && <img src={bookImage} alt="Preview" className="h-24 object-cover mt-2 border border-aminah-gold/30" />}
-                </div>
-
-                <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Description</label><textarea value={bookDesc} onChange={(e) => setBookDesc(e.target.value)} rows={3} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Price (৳)</label><input type="number" required value={bookPrice} onChange={(e) => setBookPrice(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
-                  
-                  {/* Category Dropdown for Books */}
-                  <div>
-                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label>
-                    <select value={bookCategory} onChange={(e) => setBookCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
-                      {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* NEW: Feature Checkbox */}
-                <div className="flex items-center gap-3 bg-[#0a110f] border border-aminah-gold/20 p-4 mt-2">
-                  <input type="checkbox" id="featureBook" checked={bookIsFeatured} onChange={(e) => setBookIsFeatured(e.target.checked)} className="w-4 h-4 accent-aminah-gold cursor-pointer" />
-                  <label htmlFor="featureBook" className="text-xs text-aminah-ivory tracking-widest cursor-pointer select-none">Feature on Landing Page</label>
-                </div>
-                
-                <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
-                  {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Book" : "Publish Book"}
-                </button>
-                {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
-              </form>
-            )}
-
-            {/* LIBRARY FORM */}
-            {activeTab === "library" && (
-              <form onSubmit={handleSaveLibrary} className="space-y-5 font-sans">
-                <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Document Title</label><input type="text" required value={libTitle} onChange={(e) => setLibTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={libAuthor} onChange={(e) => setLibAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
-                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Publisher</label><input type="text" required value={libPublisher} onChange={(e) => setLibPublisher(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
-                </div>
-
-                {/* PDF Upload Area */}
-                <div>
-                  <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">PDF Document</label>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="PDF URL..." value={libFileUrl} onChange={(e) => setLibFileUrl(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory text-sm focus:outline-none focus:border-aminah-gold" />
-                    <label className="bg-aminah-gold/10 border border-aminah-gold/30 p-3 cursor-pointer hover:bg-aminah-gold/20 flex items-center justify-center min-w-[50px] transition-colors">
-                      {uploading ? <Loader2 className="w-4 h-4 animate-spin text-aminah-gold" /> : <UploadCloud className="w-5 h-5 text-aminah-gold" />}
-                      <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, 'book-pdfs')} disabled={uploading} />
-                    </label>
-                  </div>
-                  {libFileUrl && <p className="text-xs text-aminah-green mt-2">File Ready: {libFileUrl.split('/').pop()}</p>}
-                </div>
-
-                <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Description</label><textarea value={libDesc} onChange={(e) => setLibDesc(e.target.value)} rows={3} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                   <div>
-                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Access</label>
-                    <select value={libIsFree ? "true" : "false"} onChange={(e) => setLibIsFree(e.target.value === "true")} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
-                      <option value="true">Free</option>
-                      <option value="false">Premium</option>
-                    </select>
-                  </div>
-                  
-                  {/* Category Dropdown for Library */}
-                  <div>
-                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label>
-                    <select value={libCategory} onChange={(e) => setLibCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
-                      {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                
-                <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
-                  {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Item" : "Publish to Library"}
-                </button>
-                {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
-              </form>
-            )}
-          </div>
-
-          {/* Right List Column */}
-          <div className="lg:col-span-2 bg-[#111c19] border border-aminah-gold/20 p-8">
-            <div className="flex items-center gap-3 mb-6 border-b border-aminah-gold/10 pb-4">
-              {activeTab === "books" ? <Book className="w-5 h-5 text-aminah-gold" /> : <FileText className="w-5 h-5 text-aminah-gold" />}
-              <h2 className="text-xl">Database Records</h2>
-            </div>
-            
-            {loading ? (
-              <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 text-aminah-gold animate-spin" /></div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {activeTab === "books" && books.map((book) => (
-                  <div key={book.id} className={`bg-[#0a110f] border p-4 transition-colors flex justify-between items-center group ${book.is_featured ? 'border-aminah-gold/60 bg-[#111c19]/50 shadow-md' : 'border-aminah-gold/10 hover:border-aminah-gold/40'}`}>
-                    <div className="flex items-center gap-4">
-                      {book.image_url ? (
-                         <img src={book.image_url} alt="cover" className="w-12 h-16 object-cover border border-aminah-gold/30" />
-                      ) : (
-                         <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>
-                      )}
-                      <div>
-                        <h3 className="text-lg text-aminah-ivory flex items-center gap-2">
-                          {book.title}
-                          {book.is_featured && <Star className="w-4 h-4 text-aminah-gold fill-aminah-gold" />}
-                        </h3>
-                        <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {book.author || "Unknown"} • {book.publisher || "N/A"}</p>
-                        <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{book.format} • {book.category}</p>
-                        <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">৳ {book.price}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEditClick(book, "book")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
-                      <button onClick={() => handleDeleteBook(book.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
-                    </div>
-                  </div>
-                ))}
-
-                {activeTab === "library" && libraryItems.map((item) => (
-                  <div key={item.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-center group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-aminah-gold/50" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg text-aminah-ivory">{item.title}</h3>
-                        <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {item.author || "Unknown"} • {item.publisher || "N/A"}</p>
-                        <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{item.category}</p>
-                        <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">{item.isFree ? "Free" : "Premium"}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEditClick(item, "library")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
-                      <button onClick={() => handleDeleteLibrary(item.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
-                    </div>
-                  </div>
-                ))}
+        {/* --- ORDERS TAB CONTENT --- */}
+        {activeTab === "orders" && (
+          <div className="bg-[#111c19]/60 backdrop-blur-md border border-aminah-gold/20 shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-aminah-gold/10 flex justify-between items-center bg-[#050807]/50">
+              <h2 className="text-xl text-aminah-gold font-serif flex items-center gap-2">
+                <Package className="w-5 h-5" /> Recent Orders
+              </h2>
+              <div className="text-aminah-ivory/60 text-xs font-sans tracking-widest uppercase">
+                Total: {orders.length}
               </div>
-            )}
+            </div>
+
+            <div className="overflow-x-auto">
+              {orders.length === 0 ? (
+                <div className="p-20 text-center text-aminah-ivory/50 font-serif italic">
+                  No orders have been placed yet.
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#050807] text-aminah-gold/70 text-[10px] font-sans tracking-[0.2em] uppercase">
+                      <th className="p-4 border-b border-aminah-gold/10">Order ID & Date</th>
+                      <th className="p-4 border-b border-aminah-gold/10">Customer Details</th>
+                      <th className="p-4 border-b border-aminah-gold/10">Ordered Items</th>
+                      <th className="p-4 border-b border-aminah-gold/10">Total Amount</th>
+                      <th className="p-4 border-b border-aminah-gold/10">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((order) => (
+                      <tr key={order.id} className="border-b border-aminah-gold/5 hover:bg-aminah-gold/5 transition-colors">
+                        
+                        <td className="p-4">
+                          <p className="text-aminah-ivory font-sans text-xs mb-1">#{order.id.slice(0, 8).toUpperCase()}</p>
+                          <p className="text-aminah-ivory/40 font-sans text-[10px]">{formatDate(order.created_at)}</p>
+                        </td>
+                        
+                        <td className="p-4">
+                          <p className="text-aminah-gold font-serif text-sm">{order.customer_name}</p>
+                          <p className="text-aminah-ivory/60 font-sans text-xs">{order.customer_phone}</p>
+                          <p className="text-aminah-ivory/40 font-sans text-[10px] truncate max-w-[200px]">{order.delivery_address}</p>
+                        </td>
+                        
+                        <td className="p-4">
+                          <div className="flex flex-col gap-1">
+                            {order.order_items?.map((item: any, idx: number) => (
+                              <span key={idx} className="text-aminah-ivory/80 font-sans text-xs line-clamp-1">
+                                {item.quantity}x {item.title}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        
+                        <td className="p-4">
+                          <p className="text-aminah-gold font-sans font-bold text-sm">৳{order.grand_total}</p>
+                          <p className="text-aminah-ivory/40 font-sans text-[9px] uppercase tracking-widest">{order.payment_method}</p>
+                        </td>
+                        
+                        <td className="p-4">
+                          {order.status === 'pending' ? (
+                            <span className="inline-flex items-center gap-1.5 bg-yellow-900/30 text-yellow-500 border border-yellow-700/50 px-2.5 py-1 rounded-full text-[9px] font-sans font-bold tracking-widest uppercase">
+                              <Clock className="w-3 h-3" /> Pending
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 bg-green-900/30 text-green-500 border border-green-700/50 px-2.5 py-1 rounded-full text-[9px] font-sans font-bold tracking-widest uppercase">
+                              <CheckCircle className="w-3 h-3" /> Completed
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* --- BOOKS & LIBRARY TABS CONTENT --- */}
+        {(activeTab === "books" || activeTab === "library") && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Left Form Column */}
+            <div className="lg:col-span-1 bg-[#111c19] border border-aminah-gold/20 p-8 h-fit">
+              <div className="flex items-center gap-3 mb-6 border-b border-aminah-gold/10 pb-4">
+                {isEditing ? <Edit className="w-5 h-5 text-aminah-gold" /> : <Plus className="w-5 h-5 text-aminah-gold" />}
+                <h2 className="text-xl">{isEditing ? "Edit" : "Add New"} {activeTab === "books" ? "Book" : "Library Item"}</h2>
+              </div>
+              
+              {/* BOOKS FORM */}
+              {activeTab === "books" && (
+                <form onSubmit={handleSaveBook} className="space-y-5 font-sans">
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Book Title</label><input type="text" required value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={bookAuthor} onChange={(e) => setBookAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                    <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Publisher</label><input type="text" required value={bookPublisher} onChange={(e) => setBookPublisher(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Cover Image</label>
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Image URL..." value={bookImage} onChange={(e) => setBookImage(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory text-sm focus:outline-none focus:border-aminah-gold" />
+                      <label className="bg-aminah-gold/10 border border-aminah-gold/30 p-3 cursor-pointer hover:bg-aminah-gold/20 flex items-center justify-center min-w-[50px] transition-colors">
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin text-aminah-gold" /> : <UploadCloud className="w-5 h-5 text-aminah-gold" />}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'book-covers')} disabled={uploading} />
+                      </label>
+                    </div>
+                    {bookImage && <img src={bookImage} alt="Preview" className="h-24 object-cover mt-2 border border-aminah-gold/30" />}
+                  </div>
+
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Description</label><textarea value={bookDesc} onChange={(e) => setBookDesc(e.target.value)} rows={3} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Price (৳)</label><input type="number" required value={bookPrice} onChange={(e) => setBookPrice(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
+                    
+                    <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label>
+                      <select value={bookCategory} onChange={(e) => setBookCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
+                        {CATEGORIES.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-[#0a110f] border border-aminah-gold/20 p-4 mt-2">
+                    <input type="checkbox" id="featureBook" checked={bookIsFeatured} onChange={(e) => setBookIsFeatured(e.target.checked)} className="w-4 h-4 accent-aminah-gold cursor-pointer" />
+                    <label htmlFor="featureBook" className="text-xs text-aminah-ivory tracking-widest cursor-pointer select-none">Feature on Landing Page</label>
+                  </div>
+                  
+                  <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
+                    {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Book" : "Publish Book"}
+                  </button>
+                  {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
+                </form>
+              )}
+
+              {/* LIBRARY FORM */}
+              {activeTab === "library" && (
+                <form onSubmit={handleSaveLibrary} className="space-y-5 font-sans">
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Document Title</label><input type="text" required value={libTitle} onChange={(e) => setLibTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={libAuthor} onChange={(e) => setLibAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                    <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Publisher</label><input type="text" required value={libPublisher} onChange={(e) => setLibPublisher(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">PDF Document</label>
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="PDF URL..." value={libFileUrl} onChange={(e) => setLibFileUrl(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory text-sm focus:outline-none focus:border-aminah-gold" />
+                      <label className="bg-aminah-gold/10 border border-aminah-gold/30 p-3 cursor-pointer hover:bg-aminah-gold/20 flex items-center justify-center min-w-[50px] transition-colors">
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin text-aminah-gold" /> : <UploadCloud className="w-5 h-5 text-aminah-gold" />}
+                        <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, 'book-pdfs')} disabled={uploading} />
+                      </label>
+                    </div>
+                    {libFileUrl && <p className="text-xs text-aminah-green mt-2">File Ready: {libFileUrl.split('/').pop()}</p>}
+                  </div>
+
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Description</label><textarea value={libDesc} onChange={(e) => setLibDesc(e.target.value)} rows={3} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                     <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Access</label>
+                      <select value={libIsFree ? "true" : "false"} onChange={(e) => setLibIsFree(e.target.value === "true")} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
+                        <option value="true">Free</option>
+                        <option value="false">Premium</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label>
+                      <select value={libCategory} onChange={(e) => setLibCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
+                        {CATEGORIES.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
+                    {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Item" : "Publish to Library"}
+                  </button>
+                  {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
+                </form>
+              )}
+            </div>
+
+            {/* Right List Column */}
+            <div className="lg:col-span-2 bg-[#111c19] border border-aminah-gold/20 p-8">
+              <div className="flex items-center gap-3 mb-6 border-b border-aminah-gold/10 pb-4">
+                {activeTab === "books" ? <Book className="w-5 h-5 text-aminah-gold" /> : <FileText className="w-5 h-5 text-aminah-gold" />}
+                <h2 className="text-xl">Database Records</h2>
+              </div>
+              
+              {loading ? (
+                <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 text-aminah-gold animate-spin" /></div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {activeTab === "books" && books.map((book) => (
+                    <div key={book.id} className={`bg-[#0a110f] border p-4 transition-colors flex justify-between items-center group ${book.is_featured ? 'border-aminah-gold/60 bg-[#111c19]/50 shadow-md' : 'border-aminah-gold/10 hover:border-aminah-gold/40'}`}>
+                      <div className="flex items-center gap-4">
+                        {book.image_url ? (
+                           <img src={book.image_url} alt="cover" className="w-12 h-16 object-cover border border-aminah-gold/30" />
+                        ) : (
+                           <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>
+                        )}
+                        <div>
+                          <h3 className="text-lg text-aminah-ivory flex items-center gap-2">
+                            {book.title}
+                            {book.is_featured && <Star className="w-4 h-4 text-aminah-gold fill-aminah-gold" />}
+                          </h3>
+                          <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {book.author || "Unknown"} | {book.publisher || "N/A"}</p>
+                          <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{book.format} | {book.category}</p>
+                          <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">৳ {book.price}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEditClick(book, "book")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
+                        <button onClick={() => handleDeleteBook(book.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {activeTab === "library" && libraryItems.map((item) => (
+                    <div key={item.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-center group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center">
+                          <FileText className="w-6 h-6 text-aminah-gold/50" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg text-aminah-ivory">{item.title}</h3>
+                          <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {item.author || "Unknown"} | {item.publisher || "N/A"}</p>
+                          <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{item.category}</p>
+                          <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">{item.isFree ? "Free" : "Premium"}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEditClick(item, "library")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
+                        <button onClick={() => handleDeleteLibrary(item.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

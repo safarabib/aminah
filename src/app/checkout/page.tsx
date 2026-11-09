@@ -3,16 +3,82 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck, Truck, Lock, CreditCard, ShoppingBag } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Truck, Lock, CreditCard, ShoppingBag, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase"; // SUPABASE CONNECTED
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal } = useCart();
+  
+  // States for Form and Order
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [formData, setFormData] = useState({ name: "", phone: "", email: "", address: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
 
   const deliveryFee = 60; // Standard Dhaka Delivery
   const grandTotal = cartTotal + (cartTotal > 0 ? deliveryFee : 0);
 
-  // Jodi cart empty thake
+  // Handle Order Submission
+  const handleConfirmOrder = async () => {
+    // 1. Basic Validation
+    if (!formData.name || !formData.phone || !formData.address) {
+      alert("Please fill in your Full Name, Phone Number, and Delivery Address.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // 2. Prepare data for Supabase
+    const orderData = {
+      customer_name: formData.name,
+      customer_phone: formData.phone,
+      customer_email: formData.email,
+      delivery_address: formData.address,
+      payment_method: paymentMethod,
+      order_items: cartItems, // Saves the entire cart as JSON
+      subtotal: cartTotal,
+      delivery_fee: deliveryFee,
+      grand_total: grandTotal
+    };
+
+    // 3. Insert into Supabase
+    const { error } = await supabase.from('orders').insert([orderData]);
+
+    if (error) {
+      console.error("Error submitting order:", error);
+      alert("Something went wrong. Please try again.");
+      setIsSubmitting(false);
+    } else {
+      // 4. Success! Clear Cart and show Thank You screen
+      localStorage.removeItem("aminah_cart");
+      setOrderSuccess(true);
+      setIsSubmitting(false);
+    }
+  };
+
+  // SUCCESS SCREEN (Shown after order is placed)
+  if (orderSuccess) {
+    return (
+      <main className="min-h-screen bg-[#0a110f] flex flex-col items-center justify-center pt-32 pb-32 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-aminah-gold/5 blur-[150px] pointer-events-none z-0"></div>
+        <div className="relative z-10 flex flex-col items-center text-center cinematic-reveal">
+          <ShieldCheck className="w-20 h-20 text-aminah-gold mb-6 animate-pulse drop-shadow-[0_0_20px_rgba(197,164,109,0.5)]" />
+          <h1 className="text-4xl md:text-5xl font-serif text-aminah-ivory mb-4">Order Confirmed</h1>
+          <p className="text-aminah-ivory/60 mb-8 font-serif italic text-lg max-w-md">
+            JazakAllah Khair! Your order has been securely placed. Our team will contact you shortly to confirm delivery.
+          </p>
+          <button 
+            onClick={() => window.location.href = '/bookstore'} 
+            className="bg-aminah-gold text-aminah-green px-12 py-4 font-sans font-bold tracking-[0.2em] uppercase text-xs hover:bg-aminah-ivory transition-colors shadow-[0_0_30px_rgba(197,164,109,0.2)] hover:shadow-[0_0_50px_rgba(197,164,109,0.4)]"
+          >
+            Continue Shopping
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // EMPTY CART SCREEN
   if (cartItems.length === 0) {
     return (
       <main className="min-h-screen bg-[#0a110f] flex flex-col items-center justify-center pt-32 pb-32 px-6 relative overflow-hidden">
@@ -48,7 +114,6 @@ export default function CheckoutPage() {
           {/* LEFT COLUMN: FORM */}
           <div className="lg:col-span-7 space-y-12">
             
-            {/* 1. Shipping Details */}
             <section>
               <h2 className="text-xl text-aminah-gold font-serif mb-6 flex items-center gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-aminah-gold/20 text-aminah-gold text-xs font-sans">1</span>
@@ -56,35 +121,56 @@ export default function CheckoutPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-aminah-ivory/60 text-[10px] font-sans tracking-[0.2em] uppercase">Full Name</label>
-                  <input type="text" className="w-full bg-[#111c19] border border-aminah-gold/20 text-aminah-ivory px-4 py-3 focus:outline-none focus:border-aminah-gold transition-colors font-sans" placeholder="Abdullah Al Amin" />
+                  <label className="text-aminah-ivory/60 text-[10px] font-sans tracking-[0.2em] uppercase">Full Name *</label>
+                  <input 
+                    type="text" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full bg-[#111c19] border border-aminah-gold/20 text-aminah-ivory px-4 py-3 focus:outline-none focus:border-aminah-gold transition-colors font-sans" 
+                    placeholder="Abdullah Al Amin" 
+                  />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-aminah-ivory/60 text-[10px] font-sans tracking-[0.2em] uppercase">Phone Number</label>
-                  <input type="tel" className="w-full bg-[#111c19] border border-aminah-gold/20 text-aminah-ivory px-4 py-3 focus:outline-none focus:border-aminah-gold transition-colors font-sans" placeholder="017..." />
+                  <label className="text-aminah-ivory/60 text-[10px] font-sans tracking-[0.2em] uppercase">Phone Number *</label>
+                  <input 
+                    type="tel" 
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    className="w-full bg-[#111c19] border border-aminah-gold/20 text-aminah-ivory px-4 py-3 focus:outline-none focus:border-aminah-gold transition-colors font-sans" 
+                    placeholder="017..." 
+                  />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-aminah-ivory/60 text-[10px] font-sans tracking-[0.2em] uppercase">Email Address (Optional)</label>
-                  <input type="email" className="w-full bg-[#111c19] border border-aminah-gold/20 text-aminah-ivory px-4 py-3 focus:outline-none focus:border-aminah-gold transition-colors font-sans" placeholder="your@email.com" />
+                  <input 
+                    type="email" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className="w-full bg-[#111c19] border border-aminah-gold/20 text-aminah-ivory px-4 py-3 focus:outline-none focus:border-aminah-gold transition-colors font-sans" 
+                    placeholder="your@email.com" 
+                  />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-aminah-ivory/60 text-[10px] font-sans tracking-[0.2em] uppercase">Full Delivery Address</label>
-                  <textarea rows={3} className="w-full bg-[#111c19] border border-aminah-gold/20 text-aminah-ivory px-4 py-3 focus:outline-none focus:border-aminah-gold transition-colors font-sans resize-none" placeholder="House, Road, Area, City..."></textarea>
+                  <label className="text-aminah-ivory/60 text-[10px] font-sans tracking-[0.2em] uppercase">Full Delivery Address *</label>
+                  <textarea 
+                    rows={3} 
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    className="w-full bg-[#111c19] border border-aminah-gold/20 text-aminah-ivory px-4 py-3 focus:outline-none focus:border-aminah-gold transition-colors font-sans resize-none" 
+                    placeholder="House, Road, Area, City..."
+                  ></textarea>
                 </div>
               </div>
             </section>
 
             <div className="w-full h-px bg-aminah-gold/10"></div>
 
-            {/* 2. Payment Method */}
             <section>
               <h2 className="text-xl text-aminah-gold font-serif mb-6 flex items-center gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-aminah-gold/20 text-aminah-gold text-xs font-sans">2</span>
                 Payment Method
               </h2>
               <div className="space-y-4">
-                
-                {/* Cash on Delivery */}
                 <label className={`flex items-center justify-between p-5 border cursor-pointer transition-colors ${paymentMethod === 'cod' ? 'bg-aminah-gold/10 border-aminah-gold' : 'bg-[#111c19] border-aminah-gold/20 hover:border-aminah-gold/50'}`} onClick={() => setPaymentMethod('cod')}>
                   <div className="flex items-center gap-4">
                     <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentMethod === 'cod' ? 'border-aminah-gold' : 'border-aminah-gold/40'}`}>
@@ -98,7 +184,6 @@ export default function CheckoutPage() {
                   <Truck className={`w-5 h-5 ${paymentMethod === 'cod' ? 'text-aminah-gold' : 'text-aminah-gold/40'}`} />
                 </label>
 
-                {/* Digital Payment (Disabled) */}
                 <label className="flex items-center justify-between p-5 border border-aminah-gold/10 bg-[#0a110f] opacity-50 cursor-not-allowed">
                   <div className="flex items-center gap-4">
                     <div className="w-4 h-4 rounded-full border border-aminah-gold/20"></div>
@@ -111,10 +196,9 @@ export default function CheckoutPage() {
                 </label>
               </div>
             </section>
-
           </div>
 
-          {/* RIGHT COLUMN: ORDER SUMMARY (Sticky Panel) */}
+          {/* RIGHT COLUMN: ORDER SUMMARY */}
           <div className="lg:col-span-5">
             <div className="bg-[#111c19]/80 backdrop-blur-xl border border-aminah-gold/20 p-8 sticky top-32 shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
               
@@ -157,13 +241,19 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Confirm Order Button */}
+              {/* Confirm Order Button with Loading State */}
               <button 
-                className="relative w-full inline-flex items-center justify-center px-12 py-5 text-xs font-sans font-bold tracking-[0.2em] uppercase text-[#0a110f] overflow-hidden bg-aminah-gold group transition-all duration-700 shadow-[0_0_40px_rgba(197,164,109,0.3)] hover:shadow-[0_0_60px_rgba(197,164,109,0.5)]"
+                onClick={handleConfirmOrder}
+                disabled={isSubmitting}
+                className="relative w-full inline-flex items-center justify-center px-12 py-5 text-xs font-sans font-bold tracking-[0.2em] uppercase text-[#0a110f] overflow-hidden bg-aminah-gold group transition-all duration-700 shadow-[0_0_40px_rgba(197,164,109,0.3)] hover:shadow-[0_0_60px_rgba(197,164,109,0.5)] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span className="absolute inset-0 w-full h-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out"></span>
                 <span className="relative z-10 flex items-center gap-2">
-                  Confirm Order <ShieldCheck className="w-4 h-4 ml-2" />
+                  {isSubmitting ? (
+                    <>Processing <Loader2 className="w-4 h-4 ml-2 animate-spin" /></>
+                  ) : (
+                    <>Confirm Order <ShieldCheck className="w-4 h-4 ml-2" /></>
+                  )}
                 </span>
               </button>
               
@@ -173,7 +263,6 @@ export default function CheckoutPage() {
 
             </div>
           </div>
-
         </div>
       </div>
     </main>
