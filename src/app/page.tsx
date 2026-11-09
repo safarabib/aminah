@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Book, Library, GraduationCap, PenTool, X } from "lucide-react";
+import { ArrowRight, Book, Library, GraduationCap, PenTool, X, Calendar, Clock, MapPin, Users } from "lucide-react";
+import { supabase } from "@/lib/supabase"; // ADDED for fetching glimpse data
 
 // Premium Quranic Quotes List
 const quranicQuotes = [
@@ -24,6 +25,8 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   const [featuredBooks, setFeaturedBooks] = useState<any[]>([]);
+  const [latestClasses, setLatestClasses] = useState<any[]>([]); // ADDED for Classes Glimpse
+  const [latestArticles, setLatestArticles] = useState<any[]>([]); // ADDED for Journal Glimpse
   const [quote, setQuote] = useState<{text: string, ref: string} | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   
@@ -60,6 +63,20 @@ export default function Home() {
       }
     };
     fetchBooks();
+
+    // ADDED: Fetch Latest Classes
+    const fetchLatestClasses = async () => {
+      const { data } = await supabase.from('classes').select('*').order('created_at', { ascending: false }).limit(3);
+      if (data) setLatestClasses(data);
+    };
+    fetchLatestClasses();
+
+    // ADDED: Fetch Latest Articles
+    const fetchLatestArticles = async () => {
+      const { data } = await supabase.from('articles').select('*').order('created_at', { ascending: false }).limit(3);
+      if (data) setLatestArticles(data);
+    };
+    fetchLatestArticles();
 
     setQuote(quranicQuotes[Math.floor(Math.random() * quranicQuotes.length)]);
     const timer = setTimeout(() => setShowPopup(true), 4000);
@@ -213,6 +230,11 @@ export default function Home() {
     };
   }, []);
 
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
   return (
     <main className="bg-[#0a110f] text-aminah-charcoal selection:bg-aminah-gold selection:text-aminah-green font-serif relative overflow-x-hidden min-h-screen">
       
@@ -302,7 +324,6 @@ export default function Home() {
           {[
             { title: "Bookstore", sub: "Official", icon: Book, link: "/bookstore" },
             { title: "Digital Library", sub: "Open Access", icon: Library, link: "/library" },
-            // UPDATED LINK HERE: Changed /explore to /journal
             { title: "Blogs & Articles", sub: "Research", icon: PenTool, link: "/journal" },
             { title: "Classes", sub: "Education", icon: GraduationCap, link: "/learning" },
           ].map((item, i) => (
@@ -425,6 +446,87 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* NEW SECTION: GLIMPSE OF EDUCATION CLASSES */}
+      {latestClasses.length > 0 && (
+        <section className="py-24 bg-[#0a110f] text-aminah-ivory relative border-t border-aminah-gold/10 overflow-hidden">
+          <div className="max-w-[90rem] mx-auto px-6 lg:px-12 relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-aminah-gold/10 pb-6">
+              <div>
+                <p className="text-aminah-gold text-[10px] font-sans tracking-[0.3em] uppercase mb-4">Upcoming</p>
+                <h2 className="text-3xl md:text-5xl font-serif text-aminah-ivory">Education & Classes</h2>
+              </div>
+              <Link href="/learning" className="group flex items-center gap-3 text-aminah-gold font-sans font-medium tracking-[0.2em] uppercase text-xs hover:text-aminah-ivory transition-colors mt-6 md:mt-0">
+                View All Classes <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {latestClasses.map((cls) => (
+                <div key={cls.id} className="group bg-[#111c19]/40 border border-aminah-gold/10 hover:border-aminah-gold/40 transition-all duration-500 flex flex-col h-full shadow-lg">
+                  <div className="p-8 flex flex-col flex-1 relative z-10">
+                    <div className="mb-4 inline-block bg-aminah-gold/10 text-aminah-gold text-[9px] font-sans font-bold px-3 py-1.5 uppercase tracking-[0.2em] border border-aminah-gold/20">
+                      {cls.type}
+                    </div>
+                    <h3 className="text-2xl font-serif text-aminah-ivory mb-2 group-hover:text-aminah-gold transition-colors line-clamp-2">{cls.title}</h3>
+                    <p className="text-aminah-ivory/60 font-serif italic text-sm mb-6">By {cls.instructor}</p>
+                    
+                    <div className="space-y-3 mb-8 font-sans text-[11px] tracking-widest text-aminah-ivory/70 uppercase">
+                      <div className="flex items-center gap-3"><Calendar className="w-3.5 h-3.5 text-aminah-gold" /> <span>{cls.date_info}</span></div>
+                      <div className="flex items-center gap-3"><Clock className="w-3.5 h-3.5 text-aminah-gold" /> <span>{cls.time_info}</span></div>
+                    </div>
+                    
+                    <div className="mt-auto flex items-center justify-between border-t border-aminah-gold/10 pt-6">
+                      <span className="text-sm font-sans font-bold text-aminah-ivory">{cls.fee}</span>
+                      <Link href="/learning" className="flex items-center gap-2 text-[10px] font-sans font-bold uppercase tracking-[0.2em] text-aminah-gold hover:text-aminah-ivory transition-colors">
+                        Register <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* NEW SECTION: LATEST FROM THE JOURNAL */}
+      {latestArticles.length > 0 && (
+        <section className="py-24 bg-[#050807] text-aminah-ivory relative border-t border-aminah-gold/10 overflow-hidden">
+          <div className="max-w-[90rem] mx-auto px-6 lg:px-12 relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-aminah-gold/10 pb-6">
+              <div>
+                <p className="text-aminah-gold text-[10px] font-sans tracking-[0.3em] uppercase mb-4">Latest Releases</p>
+                <h2 className="text-3xl md:text-5xl font-serif text-aminah-ivory">From The Journal</h2>
+              </div>
+              <Link href="/journal" className="group flex items-center gap-3 text-aminah-gold font-sans font-medium tracking-[0.2em] uppercase text-xs hover:text-aminah-ivory transition-colors mt-6 md:mt-0">
+                Explore Journal <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {latestArticles.map((article) => (
+                <Link href={`/journal/${article.id}`} key={article.id} className="group flex flex-col bg-[#0a110f] border border-aminah-gold/10 hover:border-aminah-gold/40 transition-all duration-500 overflow-hidden h-full">
+                  <div className="relative h-48 overflow-hidden">
+                    <img src={article.image_url || "/placeholder.jpg"} alt={article.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out grayscale-[20%] group-hover:grayscale-0" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a110f] to-transparent opacity-80"></div>
+                  </div>
+                  <div className="p-8 flex flex-col flex-grow relative z-10 -mt-8">
+                    <div className="flex items-center justify-between text-aminah-gold text-[9px] font-sans font-bold tracking-widest uppercase mb-3 bg-[#111c19] px-3 py-1.5 border border-aminah-gold/20 w-fit">
+                      <span>{formatDate(article.created_at)}</span>
+                    </div>
+                    <h3 className="text-xl font-serif text-aminah-ivory mb-3 group-hover:text-aminah-gold transition-colors line-clamp-2 leading-tight">{article.title}</h3>
+                    <p className="text-aminah-ivory/60 font-serif text-sm line-clamp-2 mb-6 flex-grow leading-relaxed">{article.description}</p>
+                    <div className="mt-auto flex items-center gap-2 text-aminah-gold/70 text-xs font-sans tracking-[0.2em] uppercase font-bold group-hover:text-aminah-gold transition-colors border-t border-aminah-gold/10 pt-4">
+                      Read Article <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-2 transition-transform duration-300" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section id="newsletter" className="py-32 bg-[#faf9f6] border-t border-aminah-gold/20 relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10 transition-all duration-1000" style={{ opacity: scrollProgress > 0.4 ? 1 : 0, transform: `translateY(${scrollProgress > 0.4 ? 0 : 30}px)` }}>
