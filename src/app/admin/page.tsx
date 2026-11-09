@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star, Package, Clock, CheckCircle, Search, Eye, PenTool } from "lucide-react";
+import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star, Package, Clock, CheckCircle, Search, Eye, PenTool, GraduationCap } from "lucide-react";
 import { supabase } from "@/lib/supabase"; 
 
 // Centralized Professional Category List
@@ -32,13 +32,14 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  // ADDED "journal" to activeTab states
-  const [activeTab, setActiveTab] = useState<"books" | "library" | "orders" | "journal">("orders");
+  // ADDED "education" to activeTab states
+  const [activeTab, setActiveTab] = useState<"books" | "library" | "orders" | "journal" | "education">("orders");
   
   const [books, setBooks] = useState<any[]>([]);
   const [libraryItems, setLibraryItems] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [articles, setArticles] = useState<any[]>([]); // ADDED state for articles
+  const [articles, setArticles] = useState<any[]>([]); 
+  const [classes, setClasses] = useState<any[]>([]); // ADDED state for education
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -76,13 +77,25 @@ export default function AdminDashboard() {
   const [artImage, setArtImage] = useState("");
   const [artReadTime, setArtReadTime] = useState("5 min");
 
+  // Form states - Education (Classes)
+  const [eduTitle, setEduTitle] = useState("");
+  const [eduType, setEduType] = useState("Weekly Class");
+  const [eduInstructor, setEduInstructor] = useState("");
+  const [eduDate, setEduDate] = useState("");
+  const [eduTime, setEduTime] = useState("");
+  const [eduLocation, setEduLocation] = useState("");
+  const [eduSeats, setEduSeats] = useState("");
+  const [eduFee, setEduFee] = useState("Free");
+  const [eduImage, setEduImage] = useState("");
+
   useEffect(() => {
     const auth = sessionStorage.getItem("adminAuth");
     if (auth === "true") {
       setIsAuthenticated(true);
       fetchData();
       fetchOrders(); 
-      fetchArticles(); // ADDED fetchArticles call
+      fetchArticles(); 
+      fetchClasses(); // ADDED fetchClasses call
     }
   }, []);
 
@@ -93,7 +106,8 @@ export default function AdminDashboard() {
       setIsAuthenticated(true);
       fetchData();
       fetchOrders();
-      fetchArticles(); // ADDED fetchArticles call
+      fetchArticles(); 
+      fetchClasses(); // ADDED fetchClasses call
     } else {
       setLoginError("Invalid password. Please try again.");
     }
@@ -133,13 +147,21 @@ export default function AdminDashboard() {
     }
   };
 
-  // ADDED Fetch Articles function
   const fetchArticles = async () => {
     const { data, error } = await supabase
       .from('articles')
       .select('*')
       .order('created_at', { ascending: false });
     if (!error) setArticles(data || []);
+  };
+
+  // ADDED Fetch Classes function
+  const fetchClasses = async () => {
+    const { data, error } = await supabase
+      .from('classes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error) setClasses(data || []);
   };
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
@@ -169,14 +191,18 @@ export default function AdminDashboard() {
     setEditingId(null);
     setBookTitle(""); setBookAuthor("AMINAH Publications"); setBookPublisher("AMINAH Publications"); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory(CATEGORIES[0]); setBookFormat("Paperback"); setBookIsFeatured(false);
     setLibTitle(""); setLibAuthor("Research Board"); setLibPublisher("Research Board"); setLibDesc(""); setLibFileUrl(""); setLibCategory(CATEGORIES[0]);
-    setArtTitle(""); setArtAuthor("Aminah Research Board"); setArtDesc(""); setArtBody(""); setArtImage(""); setArtReadTime("5 min"); // ADDED reset for articles
+    setArtTitle(""); setArtAuthor("Aminah Research Board"); setArtDesc(""); setArtBody(""); setArtImage(""); setArtReadTime("5 min");
+    // ADDED reset for education
+    setEduTitle(""); setEduType("Weekly Class"); setEduInstructor(""); setEduDate(""); setEduTime(""); setEduLocation(""); setEduSeats(""); setEduFee("Free"); setEduImage("");
   };
 
-  const handleEditClick = (item: any, type: "book" | "library" | "journal") => {
+  // Type definition updated to match state, avoiding TS error
+  const handleEditClick = (item: any, type: "books" | "library" | "journal" | "education") => {
     setIsEditing(true);
     setEditingId(item.id);
-    if (type === "book") {
-      setActiveTab("books");
+    setActiveTab(type);
+    
+    if (type === "books") {
       setBookTitle(item.title);
       setBookAuthor(item.author || "AMINAH Publications");
       setBookPublisher(item.publisher || "AMINAH Publications");
@@ -187,7 +213,6 @@ export default function AdminDashboard() {
       setBookImage(item.image_url || "");
       setBookIsFeatured(item.is_featured || false);
     } else if (type === "library") {
-      setActiveTab("library");
       setLibTitle(item.title);
       setLibAuthor(item.author || "Research Board");
       setLibPublisher(item.publisher || "Research Board");
@@ -197,14 +222,22 @@ export default function AdminDashboard() {
       setLibDesc(item.description || "");
       setLibFileUrl(item.file_url || "");
     } else if (type === "journal") {
-      // ADDED Edit state for journal
-      setActiveTab("journal");
       setArtTitle(item.title);
       setArtAuthor(item.author || "Aminah Research Board");
       setArtDesc(item.description || "");
       setArtBody(item.body || "");
       setArtImage(item.image_url || "");
       setArtReadTime(item.read_time || "5 min");
+    } else if (type === "education") {
+      setEduTitle(item.title);
+      setEduType(item.type || "Weekly Class");
+      setEduInstructor(item.instructor || "");
+      setEduDate(item.date_info || "");
+      setEduTime(item.time_info || "");
+      setEduLocation(item.location || "");
+      setEduSeats(item.seats_available || "");
+      setEduFee(item.fee || "Free");
+      setEduImage(item.image_url || "");
     }
   };
 
@@ -222,8 +255,8 @@ export default function AdminDashboard() {
       const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
       
       if (bucket === 'book-covers') {
-        // ADDED logic to set image for either book or journal based on activeTab
         if (activeTab === "journal") setArtImage(data.publicUrl);
+        else if (activeTab === "education") setEduImage(data.publicUrl); // ADDED image upload for education
         else setBookImage(data.publicUrl);
       } else {
         setLibFileUrl(data.publicUrl);
@@ -294,7 +327,6 @@ export default function AdminDashboard() {
     fetchData();
   };
 
-  // ADDED Handle Save Article
   const handleSaveArticle = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdding(true);
@@ -318,11 +350,44 @@ export default function AdminDashboard() {
     setAdding(false);
   };
 
-  // ADDED Handle Delete Article
   const handleDeleteArticle = async (id: string) => {
     if (!confirm("Are you sure you want to delete this article?")) return;
     await supabase.from('articles').delete().eq('id', id);
     fetchArticles();
+  };
+
+  // ADDED Handle Save Education (Class)
+  const handleSaveEducation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdding(true);
+    const classData = { 
+      title: eduTitle, 
+      type: eduType, 
+      instructor: eduInstructor, 
+      date_info: eduDate, 
+      time_info: eduTime, 
+      location: eduLocation, 
+      seats_available: eduSeats, 
+      fee: eduFee, 
+      image_url: eduImage 
+    };
+    
+    if (isEditing) {
+      await supabase.from('classes').update(classData).eq('id', editingId);
+    } else {
+      await supabase.from('classes').insert([classData]);
+    }
+    
+    resetForm(); 
+    fetchClasses(); 
+    setAdding(false);
+  };
+
+  // ADDED Handle Delete Education (Class)
+  const handleDeleteEducation = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this class?")) return;
+    await supabase.from('classes').delete().eq('id', id);
+    fetchClasses();
   };
 
   // --- LOGIN SCREEN ---
@@ -361,16 +426,17 @@ export default function AdminDashboard() {
             <h1 className="text-4xl text-aminah-gold mb-2">Super Admin Dashboard</h1>
             <p className="text-aminah-ivory/60 italic font-sans text-sm tracking-widest uppercase">Platform Management (Supabase DB)</p>
           </div>
-          <div className="flex flex-wrap gap-4 font-sans text-sm tracking-widest uppercase items-center">
+          <div className="flex flex-wrap gap-4 font-sans text-[11px] tracking-widest uppercase items-center">
             
-            <button onClick={() => {setActiveTab("orders"); fetchOrders();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "orders" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Package className="w-4 h-4" /> Orders</button>
-            <button onClick={() => {setActiveTab("books"); resetForm();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "books" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Book className="w-4 h-4" /> Books</button>
-            <button onClick={() => {setActiveTab("library"); resetForm();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "library" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Library className="w-4 h-4" /> Library</button>
+            <button onClick={() => {setActiveTab("orders"); fetchOrders();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "orders" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Package className="w-3.5 h-3.5" /> Orders</button>
+            <button onClick={() => {setActiveTab("books"); resetForm();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "books" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Book className="w-3.5 h-3.5" /> Books</button>
+            <button onClick={() => {setActiveTab("library"); resetForm();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "library" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Library className="w-3.5 h-3.5" /> Library</button>
+            <button onClick={() => {setActiveTab("journal"); resetForm(); fetchArticles();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "journal" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><PenTool className="w-3.5 h-3.5" /> Journal</button>
             
-            {/* ADDED Journal Tab */}
-            <button onClick={() => {setActiveTab("journal"); resetForm(); fetchArticles();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "journal" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><PenTool className="w-4 h-4" /> Journal</button>
+            {/* ADDED Education Tab */}
+            <button onClick={() => {setActiveTab("education"); resetForm(); fetchClasses();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "education" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><GraduationCap className="w-3.5 h-3.5" /> Education</button>
             
-            <button onClick={handleLogout} className="ml-4 text-aminah-gold/70 hover:text-red-500 transition-colors"><LogOut className="w-5 h-5" /></button>
+            <button onClick={handleLogout} className="ml-2 text-aminah-gold/70 hover:text-red-500 transition-colors"><LogOut className="w-4 h-4" /></button>
           </div>
         </div>
 
@@ -441,7 +507,7 @@ export default function AdminDashboard() {
                                 order.status === 'delivered' ? 'bg-green-900/30 text-green-500 border-green-700/50' :
                                 order.status === 'processing' ? 'bg-blue-900/30 text-blue-500 border-blue-700/50' :
                                 order.status === 'cancelled' ? 'bg-red-900/30 text-red-500 border-red-700/50' :
-                                'bg-yellow-900/30 text-yellow-500 border-yellow-700/50' // default pending
+                                'bg-yellow-900/30 text-yellow-500 border-yellow-700/50' 
                               }
                             `}
                           >
@@ -461,14 +527,17 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- BOOKS, LIBRARY & JOURNAL TABS CONTENT --- */}
-        {(activeTab === "books" || activeTab === "library" || activeTab === "journal") && (
+        {/* --- BOOKS, LIBRARY, JOURNAL & EDUCATION TABS CONTENT --- */}
+        {(activeTab === "books" || activeTab === "library" || activeTab === "journal" || activeTab === "education") && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Left Form Column */}
             <div className="lg:col-span-1 bg-[#111c19] border border-aminah-gold/20 p-8 h-fit">
               <div className="flex items-center gap-3 mb-6 border-b border-aminah-gold/10 pb-4">
                 {isEditing ? <Edit className="w-5 h-5 text-aminah-gold" /> : <Plus className="w-5 h-5 text-aminah-gold" />}
-                <h2 className="text-xl">{isEditing ? "Edit" : "Add New"} {activeTab === "books" ? "Book" : activeTab === "library" ? "Library Item" : "Article"}</h2>
+                <h2 className="text-xl">
+                  {isEditing ? "Edit" : "Add New"} 
+                  {activeTab === "books" ? " Book" : activeTab === "library" ? " Library Item" : activeTab === "journal" ? " Article" : " Class"}
+                </h2>
               </div>
               
               {/* BOOKS FORM */}
@@ -570,7 +639,7 @@ export default function AdminDashboard() {
                 </form>
               )}
 
-              {/* JOURNAL (ARTICLES) FORM ADDED HERE */}
+              {/* JOURNAL (ARTICLES) FORM */}
               {activeTab === "journal" && (
                 <form onSubmit={handleSaveArticle} className="space-y-5 font-sans">
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Article Title</label><input type="text" required value={artTitle} onChange={(e) => setArtTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="Enter an engaging title..." /></div>
@@ -602,12 +671,82 @@ export default function AdminDashboard() {
                   {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
                 </form>
               )}
+
+              {/* EDUCATION (CLASSES) FORM */}
+              {activeTab === "education" && (
+                <form onSubmit={handleSaveEducation} className="space-y-4 font-sans">
+                  <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Class/Workshop Title</label>
+                    <input type="text" required value={eduTitle} onChange={(e) => setEduTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Foundations of Fiqh" />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Type</label>
+                      <select value={eduType} onChange={(e) => setEduType(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer">
+                        <option value="Weekly Class">Weekly Class</option>
+                        <option value="Workshop">Workshop</option>
+                        <option value="Online Course">Online Course</option>
+                        <option value="Special Lecture">Special Lecture</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Instructor</label>
+                      <input type="text" required value={eduInstructor} onChange={(e) => setEduInstructor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Sheikh Abdullah" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Date / Days</label>
+                      <input type="text" required value={eduDate} onChange={(e) => setEduDate(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Every Friday or 15 Nov 2026" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Time</label>
+                      <input type="text" required value={eduTime} onChange={(e) => setEduTime(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. 4:00 PM - 5:30 PM" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Location / Zoom Link</label>
+                    <input type="text" required value={eduLocation} onChange={(e) => setEduLocation(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Main Auditorium or Zoom Link" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Seats Available</label>
+                      <input type="text" required value={eduSeats} onChange={(e) => setEduSeats(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. 50" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Fee</label>
+                      <input type="text" required value={eduFee} onChange={(e) => setEduFee(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Free or ৳500" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Banner Image (Optional)</label>
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Image URL..." value={eduImage} onChange={(e) => setEduImage(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" />
+                      <label className="bg-aminah-gold/10 border border-aminah-gold/30 p-2.5 cursor-pointer hover:bg-aminah-gold/20 flex items-center justify-center min-w-[50px] transition-colors">
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin text-aminah-gold" /> : <UploadCloud className="w-4 h-4 text-aminah-gold" />}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'book-covers')} disabled={uploading} />
+                      </label>
+                    </div>
+                    {eduImage && <img src={eduImage} alt="Preview" className="h-24 object-cover mt-2 border border-aminah-gold/30" />}
+                  </div>
+
+                  <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
+                    {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Class" : "Publish Class"}
+                  </button>
+                  {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
+                </form>
+              )}
             </div>
 
             {/* Right List Column */}
             <div className="lg:col-span-2 bg-[#111c19] border border-aminah-gold/20 p-8">
               <div className="flex items-center gap-3 mb-6 border-b border-aminah-gold/10 pb-4">
-                {activeTab === "books" ? <Book className="w-5 h-5 text-aminah-gold" /> : activeTab === "library" ? <FileText className="w-5 h-5 text-aminah-gold" /> : <PenTool className="w-5 h-5 text-aminah-gold" />}
+                {activeTab === "books" ? <Book className="w-5 h-5 text-aminah-gold" /> : activeTab === "library" ? <FileText className="w-5 h-5 text-aminah-gold" /> : activeTab === "journal" ? <PenTool className="w-5 h-5 text-aminah-gold" /> : <GraduationCap className="w-5 h-5 text-aminah-gold" />}
                 <h2 className="text-xl">Database Records</h2>
               </div>
               
@@ -616,6 +755,7 @@ export default function AdminDashboard() {
               ) : (
                 <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[800px] scrollbar-hide pr-2">
                   
+                  {/* BOOKS LIST */}
                   {activeTab === "books" && books.map((book) => (
                     <div key={book.id} className={`bg-[#0a110f] border p-4 transition-colors flex justify-between items-center group ${book.is_featured ? 'border-aminah-gold/60 bg-[#111c19]/50 shadow-md' : 'border-aminah-gold/10 hover:border-aminah-gold/40'}`}>
                       <div className="flex items-center gap-4">
@@ -635,12 +775,13 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => handleEditClick(book, "book")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
+                        <button onClick={() => handleEditClick(book, "books")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
                         <button onClick={() => handleDeleteBook(book.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
                       </div>
                     </div>
                   ))}
 
+                  {/* LIBRARY LIST */}
                   {activeTab === "library" && libraryItems.map((item) => (
                     <div key={item.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-center group">
                       <div className="flex items-center gap-4">
@@ -661,7 +802,7 @@ export default function AdminDashboard() {
                     </div>
                   ))}
 
-                  {/* JOURNAL (ARTICLES) LIST ADDED HERE */}
+                  {/* JOURNAL LIST */}
                   {activeTab === "journal" && articles.map((article) => (
                     <div key={article.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-start group">
                       <div className="flex gap-4">
@@ -683,9 +824,32 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
-                  
-                  {activeTab === "journal" && articles.length === 0 && (
-                    <div className="p-10 text-center text-aminah-ivory/40 italic">No journal articles found. Publish your first one!</div>
+
+                  {/* EDUCATION (CLASSES) LIST ADDED HERE */}
+                  {activeTab === "education" && classes.map((cls) => (
+                    <div key={cls.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-start group">
+                      <div className="flex gap-4">
+                        {cls.image_url ? (
+                           <img src={cls.image_url} alt="cover" className="w-20 h-16 object-cover border border-aminah-gold/30" />
+                        ) : (
+                           <div className="w-20 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>
+                        )}
+                        <div>
+                          <h3 className="text-lg text-aminah-ivory line-clamp-1">{cls.title}</h3>
+                          <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {cls.instructor} • {cls.type}</p>
+                          <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2 border border-aminah-gold/20 inline-block px-2 py-1 bg-aminah-gold/5">{cls.date_info} | {cls.time_info}</p>
+                          <p className="text-aminah-green font-sans bg-aminah-gold/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest inline-block">{cls.fee}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEditClick(cls, "education")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
+                        <button onClick={() => handleDeleteEducation(cls.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {activeTab === "education" && classes.length === 0 && (
+                    <div className="p-10 text-center text-aminah-ivory/40 italic">No classes or workshops found. Publish your first one!</div>
                   )}
 
                 </div>
