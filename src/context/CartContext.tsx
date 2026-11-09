@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ShoppingCart, X, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
-import { useRouter } from "next/navigation"; // 1. IMPORTED ROUTER
+import { useRouter } from "next/navigation";
 
 export interface CartItem {
   id: string;
@@ -30,7 +30,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const router = useRouter(); // 2. INITIALIZED ROUTER
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -74,14 +74,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       {children}
 
       {isMounted && (
-        <div className={`fixed inset-0 z-[100] pointer-events-none transition-opacity duration-500 ${isCartOpen ? "opacity-100" : "opacity-0"}`}>
+        <div className={`fixed inset-0 z-[100] transition-opacity duration-500 ${isCartOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
           
           <div 
-            className={`absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto transition-opacity duration-500 ${isCartOpen ? "opacity-100" : "opacity-0"}`} 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
             onClick={() => setIsCartOpen(false)}
           ></div>
 
-          <div className={`absolute top-0 right-0 h-full w-full sm:w-[400px] bg-[#0a110f] border-l border-aminah-gold/20 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto transform transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isCartOpen ? "translate-x-0" : "translate-x-full"}`}>
+          <div className={`absolute top-0 right-0 h-full w-full sm:w-[400px] bg-[#0a110f] border-l border-aminah-gold/20 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] flex flex-col transform transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${isCartOpen ? "translate-x-0" : "translate-x-full"}`}>
             
             <div className="flex items-center justify-between p-6 border-b border-aminah-gold/10">
               <div className="flex items-center gap-3 text-aminah-gold">
@@ -108,14 +108,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                       <h4 className="text-aminah-ivory font-serif leading-tight mb-2 line-clamp-2 text-sm">{item.title}</h4>
                       <div className="flex items-center justify-between mt-auto">
                         <p className="text-aminah-gold font-sans text-sm">৳{item.price}</p>
+                        
                         <div className="flex items-center gap-3 bg-[#0a110f] border border-aminah-gold/20 px-2 py-1">
-                          <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="text-aminah-gold/50 hover:text-aminah-gold"><Minus className="w-3 h-3" /></button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, item.quantity - 1); }} 
+                            className="text-aminah-gold/50 hover:text-aminah-gold p-1 cursor-pointer"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          
                           <span className="text-aminah-ivory text-xs font-sans w-3 text-center">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="text-aminah-gold/50 hover:text-aminah-gold"><Plus className="w-3 h-3" /></button>
+                          
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); updateQuantity(item.id, item.quantity + 1); }} 
+                            className="text-aminah-gold/50 hover:text-aminah-gold p-1 cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <button onClick={() => removeFromCart(item.id)} className="absolute -top-2 -right-2 bg-red-900/80 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-700">
+                    
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }} 
+                      className="absolute -top-2 -right-2 bg-red-900/80 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-700 cursor-pointer"
+                    >
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
@@ -130,7 +147,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                   <span className="text-2xl font-serif text-aminah-gold">৳{cartTotal}</span>
                 </div>
                 
-                {/* 3. CHANGED TO BUTTON WITH ROUTER.PUSH */}
                 <button 
                   onClick={() => {
                     setIsCartOpen(false);
