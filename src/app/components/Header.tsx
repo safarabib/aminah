@@ -37,7 +37,10 @@ export default function Header() {
             <Link href="/bookstore" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Our Publications</Link>
             <Link href="/library" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Digital Library</Link>
             <Link href="/learning" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Education</Link>
-            <Link href="/explore" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Journal</Link>
+            
+            {/* UPDATED: Changed href to /journal */}
+            <Link href="/journal" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Journal</Link>
+            
             <Link href="#newsletter" className="text-xs font-medium text-aminah-ivory/80 hover:text-aminah-gold transition-colors tracking-[0.15em] uppercase">Newsletter</Link>
           </nav>
 
@@ -90,7 +93,10 @@ export default function Header() {
             <Link href="/bookstore" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Our Publications</Link>
             <Link href="/library" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Digital Library</Link>
             <Link href="/learning" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Education</Link>
-            <Link href="/explore" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Journal</Link>
+            
+            {/* UPDATED: Changed href to /journal on mobile menu too */}
+            <Link href="/journal" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Journal</Link>
+            
             <Link href="#newsletter" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium text-aminah-ivory hover:text-aminah-gold transition tracking-widest uppercase">Newsletter</Link>
           </nav>
         </div>

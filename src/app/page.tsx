@@ -302,7 +302,8 @@ export default function Home() {
           {[
             { title: "Bookstore", sub: "Official", icon: Book, link: "/bookstore" },
             { title: "Digital Library", sub: "Open Access", icon: Library, link: "/library" },
-            { title: "Blogs & Articles", sub: "Research", icon: PenTool, link: "/explore" },
+            // UPDATED LINK HERE: Changed /explore to /journal
+            { title: "Blogs & Articles", sub: "Research", icon: PenTool, link: "/journal" },
             { title: "Classes", sub: "Education", icon: GraduationCap, link: "/learning" },
           ].map((item, i) => (
             <Link 
