@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star, Package, Clock, CheckCircle, Search, Eye } from "lucide-react";
+import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star, Package, Clock, CheckCircle, Search, Eye, PenTool } from "lucide-react";
 import { supabase } from "@/lib/supabase"; 
 
 // Centralized Professional Category List
@@ -32,12 +32,13 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  // ADDED "orders" to activeTab states
-  const [activeTab, setActiveTab] = useState<"books" | "library" | "orders">("orders");
+  // ADDED "journal" to activeTab states
+  const [activeTab, setActiveTab] = useState<"books" | "library" | "orders" | "journal">("orders");
   
   const [books, setBooks] = useState<any[]>([]);
   const [libraryItems, setLibraryItems] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]); // ADDED state for orders
+  const [orders, setOrders] = useState<any[]>([]);
+  const [articles, setArticles] = useState<any[]>([]); // ADDED state for articles
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -67,12 +68,21 @@ export default function AdminDashboard() {
   const [libDesc, setLibDesc] = useState("");
   const [libFileUrl, setLibFileUrl] = useState("");
 
+  // Form states - Journal (Articles)
+  const [artTitle, setArtTitle] = useState("");
+  const [artAuthor, setArtAuthor] = useState("Aminah Research Board");
+  const [artDesc, setArtDesc] = useState("");
+  const [artBody, setArtBody] = useState("");
+  const [artImage, setArtImage] = useState("");
+  const [artReadTime, setArtReadTime] = useState("5 min");
+
   useEffect(() => {
     const auth = sessionStorage.getItem("adminAuth");
     if (auth === "true") {
       setIsAuthenticated(true);
       fetchData();
-      fetchOrders(); // ADDED fetchOrders call
+      fetchOrders(); 
+      fetchArticles(); // ADDED fetchArticles call
     }
   }, []);
 
@@ -82,7 +92,8 @@ export default function AdminDashboard() {
       sessionStorage.setItem("adminAuth", "true");
       setIsAuthenticated(true);
       fetchData();
-      fetchOrders(); // ADDED fetchOrders call
+      fetchOrders();
+      fetchArticles(); // ADDED fetchArticles call
     } else {
       setLoginError("Invalid password. Please try again.");
     }
@@ -109,7 +120,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // ADDED Fetch Orders function
   const fetchOrders = async () => {
     const { data, error } = await supabase
       .from('orders')
@@ -123,7 +133,15 @@ export default function AdminDashboard() {
     }
   };
 
-  // ADDED Function to Update Order Status
+  // ADDED Fetch Articles function
+  const fetchArticles = async () => {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error) setArticles(data || []);
+  };
+
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     const { error } = await supabase
       .from('orders')
@@ -134,11 +152,10 @@ export default function AdminDashboard() {
       alert("Failed to update status");
       console.error(error);
     } else {
-      fetchOrders(); // Refresh order list silently to show new status
+      fetchOrders(); 
     }
   };
 
-  // ADDED Date format function
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { 
       year: 'numeric', month: 'short', day: 'numeric', 
@@ -152,9 +169,10 @@ export default function AdminDashboard() {
     setEditingId(null);
     setBookTitle(""); setBookAuthor("AMINAH Publications"); setBookPublisher("AMINAH Publications"); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory(CATEGORIES[0]); setBookFormat("Paperback"); setBookIsFeatured(false);
     setLibTitle(""); setLibAuthor("Research Board"); setLibPublisher("Research Board"); setLibDesc(""); setLibFileUrl(""); setLibCategory(CATEGORIES[0]);
+    setArtTitle(""); setArtAuthor("Aminah Research Board"); setArtDesc(""); setArtBody(""); setArtImage(""); setArtReadTime("5 min"); // ADDED reset for articles
   };
 
-  const handleEditClick = (item: any, type: "book" | "library") => {
+  const handleEditClick = (item: any, type: "book" | "library" | "journal") => {
     setIsEditing(true);
     setEditingId(item.id);
     if (type === "book") {
@@ -168,7 +186,7 @@ export default function AdminDashboard() {
       setBookDesc(item.description || "");
       setBookImage(item.image_url || "");
       setBookIsFeatured(item.is_featured || false);
-    } else {
+    } else if (type === "library") {
       setActiveTab("library");
       setLibTitle(item.title);
       setLibAuthor(item.author || "Research Board");
@@ -178,6 +196,15 @@ export default function AdminDashboard() {
       setLibIsFree(item.isFree);
       setLibDesc(item.description || "");
       setLibFileUrl(item.file_url || "");
+    } else if (type === "journal") {
+      // ADDED Edit state for journal
+      setActiveTab("journal");
+      setArtTitle(item.title);
+      setArtAuthor(item.author || "Aminah Research Board");
+      setArtDesc(item.description || "");
+      setArtBody(item.body || "");
+      setArtImage(item.image_url || "");
+      setArtReadTime(item.read_time || "5 min");
     }
   };
 
@@ -195,7 +222,9 @@ export default function AdminDashboard() {
       const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
       
       if (bucket === 'book-covers') {
-        setBookImage(data.publicUrl);
+        // ADDED logic to set image for either book or journal based on activeTab
+        if (activeTab === "journal") setArtImage(data.publicUrl);
+        else setBookImage(data.publicUrl);
       } else {
         setLibFileUrl(data.publicUrl);
       }
@@ -265,6 +294,37 @@ export default function AdminDashboard() {
     fetchData();
   };
 
+  // ADDED Handle Save Article
+  const handleSaveArticle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdding(true);
+    const articleData = { 
+      title: artTitle, 
+      author: artAuthor, 
+      description: artDesc, 
+      body: artBody, 
+      image_url: artImage, 
+      read_time: artReadTime 
+    };
+    
+    if (isEditing) {
+      await supabase.from('articles').update(articleData).eq('id', editingId);
+    } else {
+      await supabase.from('articles').insert([articleData]);
+    }
+    
+    resetForm(); 
+    fetchArticles(); 
+    setAdding(false);
+  };
+
+  // ADDED Handle Delete Article
+  const handleDeleteArticle = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this article?")) return;
+    await supabase.from('articles').delete().eq('id', id);
+    fetchArticles();
+  };
+
   // --- LOGIN SCREEN ---
   if (!isAuthenticated) {
     return (
@@ -303,12 +363,12 @@ export default function AdminDashboard() {
           </div>
           <div className="flex flex-wrap gap-4 font-sans text-sm tracking-widest uppercase items-center">
             
-            {/* ADDED Orders Tab */}
             <button onClick={() => {setActiveTab("orders"); fetchOrders();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "orders" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Package className="w-4 h-4" /> Orders</button>
-            
             <button onClick={() => {setActiveTab("books"); resetForm();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "books" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Book className="w-4 h-4" /> Books</button>
-            
             <button onClick={() => {setActiveTab("library"); resetForm();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "library" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Library className="w-4 h-4" /> Library</button>
+            
+            {/* ADDED Journal Tab */}
+            <button onClick={() => {setActiveTab("journal"); resetForm(); fetchArticles();}} className={`px-6 py-3 border transition-colors flex items-center gap-2 ${activeTab === "journal" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><PenTool className="w-4 h-4" /> Journal</button>
             
             <button onClick={handleLogout} className="ml-4 text-aminah-gold/70 hover:text-red-500 transition-colors"><LogOut className="w-5 h-5" /></button>
           </div>
@@ -372,7 +432,6 @@ export default function AdminDashboard() {
                           <p className="text-aminah-ivory/40 font-sans text-[9px] uppercase tracking-widest">{order.payment_method}</p>
                         </td>
                         
-                        {/* DYNAMIC STATUS DROPDOWN ADDED HERE */}
                         <td className="p-4 text-center">
                           <select 
                             value={order.status || 'pending'}
@@ -402,14 +461,14 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- BOOKS & LIBRARY TABS CONTENT --- */}
-        {(activeTab === "books" || activeTab === "library") && (
+        {/* --- BOOKS, LIBRARY & JOURNAL TABS CONTENT --- */}
+        {(activeTab === "books" || activeTab === "library" || activeTab === "journal") && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Left Form Column */}
             <div className="lg:col-span-1 bg-[#111c19] border border-aminah-gold/20 p-8 h-fit">
               <div className="flex items-center gap-3 mb-6 border-b border-aminah-gold/10 pb-4">
                 {isEditing ? <Edit className="w-5 h-5 text-aminah-gold" /> : <Plus className="w-5 h-5 text-aminah-gold" />}
-                <h2 className="text-xl">{isEditing ? "Edit" : "Add New"} {activeTab === "books" ? "Book" : "Library Item"}</h2>
+                <h2 className="text-xl">{isEditing ? "Edit" : "Add New"} {activeTab === "books" ? "Book" : activeTab === "library" ? "Library Item" : "Article"}</h2>
               </div>
               
               {/* BOOKS FORM */}
@@ -510,19 +569,53 @@ export default function AdminDashboard() {
                   {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
                 </form>
               )}
+
+              {/* JOURNAL (ARTICLES) FORM ADDED HERE */}
+              {activeTab === "journal" && (
+                <form onSubmit={handleSaveArticle} className="space-y-5 font-sans">
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Article Title</label><input type="text" required value={artTitle} onChange={(e) => setArtTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="Enter an engaging title..." /></div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={artAuthor} onChange={(e) => setArtAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
+                    <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Read Time</label><input type="text" required value={artReadTime} onChange={(e) => setArtReadTime(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" placeholder="e.g. 5 min" /></div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Cover Image</label>
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Image URL..." value={artImage} onChange={(e) => setArtImage(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory text-sm focus:outline-none focus:border-aminah-gold" />
+                      <label className="bg-aminah-gold/10 border border-aminah-gold/30 p-3 cursor-pointer hover:bg-aminah-gold/20 flex items-center justify-center min-w-[50px] transition-colors">
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin text-aminah-gold" /> : <UploadCloud className="w-5 h-5 text-aminah-gold" />}
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'book-covers')} disabled={uploading} />
+                      </label>
+                    </div>
+                    {artImage && <img src={artImage} alt="Preview" className="h-24 object-cover mt-2 border border-aminah-gold/30" />}
+                  </div>
+
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Short Introduction (Preview)</label><textarea value={artDesc} onChange={(e) => setArtDesc(e.target.value)} rows={2} placeholder="A short catchy summary to show on the explore page..." className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
+                  
+                  <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Full Article Body</label><textarea value={artBody} onChange={(e) => setArtBody(e.target.value)} rows={12} placeholder="Write your full scholarly article here. You can use markdown or plain text spacing..." className="w-full bg-[#0a110f] border border-aminah-gold/20 p-4 text-aminah-ivory focus:outline-none focus:border-aminah-gold font-serif text-sm leading-relaxed"></textarea></div>
+                  
+                  <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
+                    {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Article" : "Publish Journal"}
+                  </button>
+                  {isEditing && <button type="button" onClick={resetForm} className="w-full mt-2 border border-aminah-gold/30 text-aminah-ivory text-xs py-3 uppercase tracking-widest hover:border-aminah-gold transition-colors">Cancel Edit</button>}
+                </form>
+              )}
             </div>
 
             {/* Right List Column */}
             <div className="lg:col-span-2 bg-[#111c19] border border-aminah-gold/20 p-8">
               <div className="flex items-center gap-3 mb-6 border-b border-aminah-gold/10 pb-4">
-                {activeTab === "books" ? <Book className="w-5 h-5 text-aminah-gold" /> : <FileText className="w-5 h-5 text-aminah-gold" />}
+                {activeTab === "books" ? <Book className="w-5 h-5 text-aminah-gold" /> : activeTab === "library" ? <FileText className="w-5 h-5 text-aminah-gold" /> : <PenTool className="w-5 h-5 text-aminah-gold" />}
                 <h2 className="text-xl">Database Records</h2>
               </div>
               
               {loading ? (
                 <div className="flex justify-center items-center h-40"><Loader2 className="w-8 h-8 text-aminah-gold animate-spin" /></div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[800px] scrollbar-hide pr-2">
+                  
                   {activeTab === "books" && books.map((book) => (
                     <div key={book.id} className={`bg-[#0a110f] border p-4 transition-colors flex justify-between items-center group ${book.is_featured ? 'border-aminah-gold/60 bg-[#111c19]/50 shadow-md' : 'border-aminah-gold/10 hover:border-aminah-gold/40'}`}>
                       <div className="flex items-center gap-4">
@@ -567,6 +660,34 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
+
+                  {/* JOURNAL (ARTICLES) LIST ADDED HERE */}
+                  {activeTab === "journal" && articles.map((article) => (
+                    <div key={article.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-start group">
+                      <div className="flex gap-4">
+                        {article.image_url ? (
+                           <img src={article.image_url} alt="cover" className="w-20 h-16 object-cover border border-aminah-gold/30" />
+                        ) : (
+                           <div className="w-20 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>
+                        )}
+                        <div>
+                          <h3 className="text-lg text-aminah-ivory line-clamp-1">{article.title}</h3>
+                          <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {article.author} • {formatDate(article.created_at)}</p>
+                          <p className="text-aminah-ivory/70 font-sans text-xs line-clamp-1 mb-2 max-w-md">{article.description}</p>
+                          <p className="text-[9px] font-sans tracking-widest uppercase text-aminah-gold border border-aminah-gold/20 px-2 py-0.5 inline-block bg-aminah-gold/5">Read time: {article.read_time}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEditClick(article, "journal")} className="text-blue-400/50 hover:text-blue-400 p-2 border border-transparent hover:border-blue-400/30 rounded transition-colors"><Edit className="w-5 h-5" /></button>
+                        <button onClick={() => handleDeleteArticle(article.id)} className="text-red-500/50 hover:text-red-500 p-2 border border-transparent hover:border-red-500/30 rounded transition-colors"><Trash2 className="w-5 h-5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {activeTab === "journal" && articles.length === 0 && (
+                    <div className="p-10 text-center text-aminah-ivory/40 italic">No journal articles found. Publish your first one!</div>
+                  )}
+
                 </div>
               )}
             </div>
