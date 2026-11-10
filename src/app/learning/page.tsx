@@ -2,13 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Calendar, MapPin, Clock, Users, ArrowRight, GraduationCap, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Clock, Users, ArrowRight, GraduationCap, Loader2, X, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function LearningPage() {
   const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
+
+  // Registration Modal States
+  const [selectedClass, setSelectedClass] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [regSuccess, setRegSuccess] = useState(false);
+
+  // Form Data
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    reference: ""
+  });
 
   useEffect(() => {
     fetchClasses();
@@ -28,8 +43,49 @@ export default function LearningPage() {
     ? classes 
     : classes.filter(c => c.type === filter);
 
+  // Handle opening modal
+  const handleOpenRegistration = (prog: any) => {
+    setSelectedClass(prog);
+    setRegSuccess(false);
+    setIsModalOpen(true);
+    // Reset form
+    setFormData({ name: "", phone: "", email: "", address: "", reference: "" });
+  };
+
+  // Handle Form Submission
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.phone) {
+      alert("Please provide your name and phone number.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const regData = {
+      class_title: selectedClass.title,
+      student_name: formData.name,
+      student_phone: formData.phone,
+      student_email: formData.email,
+      address: formData.address,
+      reference: formData.reference,
+      payment_status: "Pending" // Default status
+    };
+
+    const { error } = await supabase.from('class_registrations').insert([regData]);
+
+    if (error) {
+      console.error("Registration Error:", error);
+      alert("Failed to register. Please try again later.");
+      setIsSubmitting(false);
+    } else {
+      setIsSubmitting(false);
+      setRegSuccess(true);
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-[#0a110f] text-aminah-charcoal pt-32 pb-32 relative overflow-hidden">
+    <main className="min-h-screen bg-[#0a110f] text-aminah-charcoal pt-32 pb-32 relative overflow-hidden font-serif">
       {/* Ambient Glow */}
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-aminah-gold/5 rounded-full blur-[150px] pointer-events-none z-0"></div>
 
@@ -114,13 +170,144 @@ export default function LearningPage() {
                   
                   <div className="mt-auto flex items-center justify-between border-t border-aminah-gold/10 pt-6">
                     <span className="text-lg font-sans font-bold text-aminah-ivory">{prog.fee}</span>
-                    <button className="flex items-center gap-2 text-[10px] font-sans font-bold uppercase tracking-[0.2em] text-aminah-gold hover:text-aminah-ivory transition-colors">
+                    <button 
+                      onClick={() => handleOpenRegistration(prog)}
+                      className="flex items-center gap-2 text-[10px] font-sans font-bold uppercase tracking-[0.2em] text-aminah-gold hover:text-aminah-ivory transition-colors cursor-pointer"
+                    >
                       Register <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                     </button>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* REGISTRATION MODAL POPUP */}
+        {isModalOpen && selectedClass && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
+            
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
+            
+            {/* Modal Content */}
+            <div className="relative bg-[#0a110f] border border-aminah-gold/30 max-w-lg w-full shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[90vh] overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-300">
+              
+              <div className="flex justify-between items-center p-6 border-b border-aminah-gold/10 bg-[#111c19]/50">
+                <h2 className="text-aminah-gold font-serif text-xl">Class Registration</h2>
+                <button onClick={() => setIsModalOpen(false)} className="text-aminah-ivory/50 hover:text-aminah-gold transition-colors cursor-pointer">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto p-6 scrollbar-hide">
+                
+                {regSuccess ? (
+                  /* Success State */
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <ShieldCheck className="w-16 h-16 text-aminah-gold mb-4 animate-pulse drop-shadow-[0_0_15px_rgba(197,164,109,0.4)]" />
+                    <h3 className="text-2xl font-serif text-aminah-ivory mb-2">Application Received</h3>
+                    <p className="text-aminah-ivory/60 font-serif italic mb-6">
+                      JazakAllah Khair! Your registration request for <strong>{selectedClass.title}</strong> has been sent to our admin. We will review and contact you with confirmation & payment details shortly.
+                    </p>
+                    <button 
+                      onClick={() => setIsModalOpen(false)}
+                      className="bg-aminah-gold text-aminah-green px-8 py-3 font-sans font-bold tracking-widest text-xs uppercase hover:bg-aminah-ivory transition-colors w-full cursor-pointer"
+                    >
+                      Close & Return
+                    </button>
+                  </div>
+                ) : (
+                  /* Form State */
+                  <>
+                    <div className="mb-6 p-4 border border-aminah-gold/20 bg-aminah-gold/5 rounded-sm">
+                      <p className="text-aminah-ivory/50 font-sans text-[10px] tracking-widest uppercase mb-1">Applying for:</p>
+                      <h4 className="text-aminah-ivory font-serif text-lg leading-tight">{selectedClass.title}</h4>
+                      <div className="flex items-center gap-4 mt-2">
+                        <span className="text-aminah-gold font-sans font-bold text-xs uppercase tracking-widest">{selectedClass.fee}</span>
+                        <span className="text-aminah-ivory/50 font-sans text-xs flex items-center gap-1"><Clock className="w-3 h-3 text-aminah-gold/50" /> {selectedClass.time_info}</span>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleRegisterSubmit} className="space-y-5 font-sans">
+                      <div>
+                        <label className="block text-[10px] font-bold text-aminah-gold tracking-[0.2em] uppercase mb-2">Full Name *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={formData.name} 
+                          onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                          className="w-full bg-[#111c19] border border-aminah-gold/20 p-3.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold transition-colors" 
+                          placeholder="Abdullah Al Amin" 
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-[10px] font-bold text-aminah-gold tracking-[0.2em] uppercase mb-2">Phone Number *</label>
+                        <input 
+                          type="tel" 
+                          required 
+                          value={formData.phone} 
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                          className="w-full bg-[#111c19] border border-aminah-gold/20 p-3.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold transition-colors" 
+                          placeholder="017..." 
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-aminah-gold tracking-[0.2em] uppercase mb-2">Email Address</label>
+                        <input 
+                          type="email" 
+                          value={formData.email} 
+                          onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                          className="w-full bg-[#111c19] border border-aminah-gold/20 p-3.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold transition-colors" 
+                          placeholder="Optional" 
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-[10px] font-bold text-aminah-gold tracking-[0.2em] uppercase mb-2">Address / Institution</label>
+                        <input 
+                          type="text" 
+                          value={formData.address} 
+                          onChange={(e) => setFormData({...formData, address: e.target.value})} 
+                          className="w-full bg-[#111c19] border border-aminah-gold/20 p-3.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold transition-colors" 
+                          placeholder="Where are you from?" 
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-aminah-gold tracking-[0.2em] uppercase mb-2">Questions or References (Optional)</label>
+                        <textarea 
+                          rows={2} 
+                          value={formData.reference} 
+                          onChange={(e) => setFormData({...formData, reference: e.target.value})} 
+                          className="w-full bg-[#111c19] border border-aminah-gold/20 p-3.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold transition-colors resize-none" 
+                          placeholder="Any note for the admin..." 
+                        ></textarea>
+                      </div>
+
+                      <div className="pt-2">
+                        <button 
+                          type="submit" 
+                          disabled={isSubmitting} 
+                          className="w-full bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-all shadow-[0_0_20px_rgba(197,164,109,0.15)] hover:shadow-[0_0_30px_rgba(197,164,109,0.3)] flex justify-center items-center gap-2 cursor-pointer"
+                        >
+                          {isSubmitting ? (
+                            <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                          ) : (
+                            <>Submit Application <ShieldCheck className="w-4 h-4" /></>
+                          )}
+                        </button>
+                        <p className="text-center text-aminah-ivory/30 text-[9px] uppercase tracking-widest mt-4">
+                          We will reach out for payment processing.
+                        </p>
+                      </div>
+                    </form>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
