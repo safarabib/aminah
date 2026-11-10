@@ -18,6 +18,7 @@ interface CartContextType {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void; // ADDED THIS NEW FUNCTION
   cartTotal: number;
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
@@ -66,11 +67,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCartItems(prev => prev.map(item => item.id === id ? { ...item, quantity } : item));
   };
 
+  // ADDED CLEAR CART FUNCTION
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem("aminah_cart");
+  };
+
   const cartTotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, cartTotal, isCartOpen, setIsCartOpen, cartCount }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal, isCartOpen, setIsCartOpen, cartCount }}>
       {children}
 
       {isMounted && (
