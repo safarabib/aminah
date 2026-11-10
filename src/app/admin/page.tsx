@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star, Package, Clock, CheckCircle, Search, Eye, PenTool, GraduationCap } from "lucide-react";
+import { Book, Plus, Loader2, FileText, Library, Trash2, Lock, LogOut, Edit, UploadCloud, Star, Package, Clock, CheckCircle, Search, Eye, PenTool, GraduationCap, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase"; 
 
 // Centralized Professional Category List
@@ -32,14 +32,15 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  // ADDED "education" to activeTab states
-  const [activeTab, setActiveTab] = useState<"books" | "library" | "orders" | "journal" | "education">("orders");
+  // ADDED "registrations" to activeTab states
+  const [activeTab, setActiveTab] = useState<"books" | "library" | "orders" | "journal" | "education" | "registrations">("orders");
   
   const [books, setBooks] = useState<any[]>([]);
   const [libraryItems, setLibraryItems] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [articles, setArticles] = useState<any[]>([]); 
-  const [classes, setClasses] = useState<any[]>([]); // ADDED state for education
+  const [classes, setClasses] = useState<any[]>([]); 
+  const [registrations, setRegistrations] = useState<any[]>([]); // ADDED state for class registrations
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -95,7 +96,8 @@ export default function AdminDashboard() {
       fetchData();
       fetchOrders(); 
       fetchArticles(); 
-      fetchClasses(); // ADDED fetchClasses call
+      fetchClasses(); 
+      fetchRegistrations(); // ADDED
     }
   }, []);
 
@@ -107,7 +109,8 @@ export default function AdminDashboard() {
       fetchData();
       fetchOrders();
       fetchArticles(); 
-      fetchClasses(); // ADDED fetchClasses call
+      fetchClasses(); 
+      fetchRegistrations(); // ADDED
     } else {
       setLoginError("Invalid password. Please try again.");
     }
@@ -135,47 +138,35 @@ export default function AdminDashboard() {
   };
 
   const fetchOrders = async () => {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error("Error fetching orders:", error);
-    } else {
-      setOrders(data || []);
-    }
+    const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+    if (!error) setOrders(data || []);
   };
 
   const fetchArticles = async () => {
-    const { data, error } = await supabase
-      .from('articles')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('articles').select('*').order('created_at', { ascending: false });
     if (!error) setArticles(data || []);
   };
 
-  // ADDED Fetch Classes function
   const fetchClasses = async () => {
-    const { data, error } = await supabase
-      .from('classes')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('classes').select('*').order('created_at', { ascending: false });
     if (!error) setClasses(data || []);
   };
 
-  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('id', orderId);
+  // ADDED: Fetch Class Registrations
+  const fetchRegistrations = async () => {
+    const { data, error } = await supabase.from('class_registrations').select('*').order('created_at', { ascending: false });
+    if (!error) setRegistrations(data || []);
+  };
 
-    if (error) {
-      alert("Failed to update status");
-      console.error(error);
-    } else {
-      fetchOrders(); 
-    }
+  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+    const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+    if (!error) fetchOrders(); 
+  };
+
+  // ADDED: Update Registration Payment Status
+  const handleRegStatusUpdate = async (regId: string, newStatus: string) => {
+    const { error } = await supabase.from('class_registrations').update({ payment_status: newStatus }).eq('id', regId);
+    if (!error) fetchRegistrations(); 
   };
 
   const formatDate = (dateString: string) => {
@@ -192,11 +183,9 @@ export default function AdminDashboard() {
     setBookTitle(""); setBookAuthor("AMINAH Publications"); setBookPublisher("AMINAH Publications"); setBookPrice("0"); setBookDesc(""); setBookImage(""); setBookCategory(CATEGORIES[0]); setBookFormat("Paperback"); setBookIsFeatured(false);
     setLibTitle(""); setLibAuthor("Research Board"); setLibPublisher("Research Board"); setLibDesc(""); setLibFileUrl(""); setLibCategory(CATEGORIES[0]);
     setArtTitle(""); setArtAuthor("Aminah Research Board"); setArtDesc(""); setArtBody(""); setArtImage(""); setArtReadTime("5 min");
-    // ADDED reset for education
     setEduTitle(""); setEduType("Weekly Class"); setEduInstructor(""); setEduDate(""); setEduTime(""); setEduLocation(""); setEduSeats(""); setEduFee("Free"); setEduImage("");
   };
 
-  // Type definition updated to match state, avoiding TS error
   const handleEditClick = (item: any, type: "books" | "library" | "journal" | "education") => {
     setIsEditing(true);
     setEditingId(item.id);
@@ -256,7 +245,7 @@ export default function AdminDashboard() {
       
       if (bucket === 'book-covers') {
         if (activeTab === "journal") setArtImage(data.publicUrl);
-        else if (activeTab === "education") setEduImage(data.publicUrl); // ADDED image upload for education
+        else if (activeTab === "education") setEduImage(data.publicUrl);
         else setBookImage(data.publicUrl);
       } else {
         setLibFileUrl(data.publicUrl);
@@ -274,28 +263,9 @@ export default function AdminDashboard() {
     e.preventDefault();
     setAdding(true);
     const method = isEditing ? "PUT" : "POST";
-    const body = { 
-      id: editingId, 
-      title: bookTitle, 
-      author: bookAuthor, 
-      publisher: bookPublisher, 
-      category: bookCategory, 
-      price: Number(bookPrice), 
-      format: bookFormat, 
-      description: bookDesc, 
-      image_url: bookImage,
-      is_featured: bookIsFeatured
-    };
-    
-    await fetch("/api/books", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    
-    resetForm();
-    fetchData();
-    setAdding(false);
+    const body = { id: editingId, title: bookTitle, author: bookAuthor, publisher: bookPublisher, category: bookCategory, price: Number(bookPrice), format: bookFormat, description: bookDesc, image_url: bookImage, is_featured: bookIsFeatured };
+    await fetch("/api/books", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    resetForm(); fetchData(); setAdding(false);
   };
 
   const handleDeleteBook = async (id: string) => {
@@ -309,16 +279,8 @@ export default function AdminDashboard() {
     setAdding(true);
     const method = isEditing ? "PUT" : "POST";
     const body = { id: editingId, title: libTitle, author: libAuthor, publisher: libPublisher, category: libCategory, type: libType, isFree: libIsFree, description: libDesc, file_url: libFileUrl };
-    
-    await fetch("/api/library", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    
-    resetForm();
-    fetchData();
-    setAdding(false);
+    await fetch("/api/library", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    resetForm(); fetchData(); setAdding(false);
   };
 
   const handleDeleteLibrary = async (id: string) => {
@@ -330,24 +292,10 @@ export default function AdminDashboard() {
   const handleSaveArticle = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdding(true);
-    const articleData = { 
-      title: artTitle, 
-      author: artAuthor, 
-      description: artDesc, 
-      body: artBody, 
-      image_url: artImage, 
-      read_time: artReadTime 
-    };
-    
-    if (isEditing) {
-      await supabase.from('articles').update(articleData).eq('id', editingId);
-    } else {
-      await supabase.from('articles').insert([articleData]);
-    }
-    
-    resetForm(); 
-    fetchArticles(); 
-    setAdding(false);
+    const articleData = { title: artTitle, author: artAuthor, description: artDesc, body: artBody, image_url: artImage, read_time: artReadTime };
+    if (isEditing) await supabase.from('articles').update(articleData).eq('id', editingId);
+    else await supabase.from('articles').insert([articleData]);
+    resetForm(); fetchArticles(); setAdding(false);
   };
 
   const handleDeleteArticle = async (id: string) => {
@@ -356,41 +304,21 @@ export default function AdminDashboard() {
     fetchArticles();
   };
 
-  // ADDED Handle Save Education (Class)
   const handleSaveEducation = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdding(true);
-    const classData = { 
-      title: eduTitle, 
-      type: eduType, 
-      instructor: eduInstructor, 
-      date_info: eduDate, 
-      time_info: eduTime, 
-      location: eduLocation, 
-      seats_available: eduSeats, 
-      fee: eduFee, 
-      image_url: eduImage 
-    };
-    
-    if (isEditing) {
-      await supabase.from('classes').update(classData).eq('id', editingId);
-    } else {
-      await supabase.from('classes').insert([classData]);
-    }
-    
-    resetForm(); 
-    fetchClasses(); 
-    setAdding(false);
+    const classData = { title: eduTitle, type: eduType, instructor: eduInstructor, date_info: eduDate, time_info: eduTime, location: eduLocation, seats_available: eduSeats, fee: eduFee, image_url: eduImage };
+    if (isEditing) await supabase.from('classes').update(classData).eq('id', editingId);
+    else await supabase.from('classes').insert([classData]);
+    resetForm(); fetchClasses(); setAdding(false);
   };
 
-  // ADDED Handle Delete Education (Class)
   const handleDeleteEducation = async (id: string) => {
     if (!confirm("Are you sure you want to delete this class?")) return;
     await supabase.from('classes').delete().eq('id', id);
     fetchClasses();
   };
 
-  // --- LOGIN SCREEN ---
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#0a110f] flex items-center justify-center font-serif text-aminah-ivory px-6">
@@ -402,7 +330,6 @@ export default function AdminDashboard() {
           </div>
           <h1 className="text-3xl text-center text-aminah-gold mb-2">Admin Portal</h1>
           <p className="text-center text-aminah-ivory/50 font-sans text-xs tracking-widest uppercase mb-8">Authorized Access Only</p>
-          
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <input type="password" value={password} onChange={(e) => {setPassword(e.target.value); setLoginError("");}} placeholder="Enter admin password" className="w-full bg-[#0a110f] border border-aminah-gold/20 p-4 text-center text-aminah-ivory focus:outline-none focus:border-aminah-gold font-sans tracking-widest transition-colors" />
@@ -415,7 +342,6 @@ export default function AdminDashboard() {
     );
   }
 
-  // --- ADMIN DASHBOARD ---
   return (
     <div className="min-h-screen bg-[#0a110f] text-aminah-ivory pt-32 pb-20 px-6 font-serif">
       <div className="max-w-[90rem] mx-auto">
@@ -427,18 +353,94 @@ export default function AdminDashboard() {
             <p className="text-aminah-ivory/60 italic font-sans text-sm tracking-widest uppercase">Platform Management (Supabase DB)</p>
           </div>
           <div className="flex flex-wrap gap-4 font-sans text-[11px] tracking-widest uppercase items-center">
-            
             <button onClick={() => {setActiveTab("orders"); fetchOrders();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "orders" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Package className="w-3.5 h-3.5" /> Orders</button>
             <button onClick={() => {setActiveTab("books"); resetForm();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "books" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Book className="w-3.5 h-3.5" /> Books</button>
             <button onClick={() => {setActiveTab("library"); resetForm();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "library" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Library className="w-3.5 h-3.5" /> Library</button>
             <button onClick={() => {setActiveTab("journal"); resetForm(); fetchArticles();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "journal" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><PenTool className="w-3.5 h-3.5" /> Journal</button>
-            
-            {/* ADDED Education Tab */}
             <button onClick={() => {setActiveTab("education"); resetForm(); fetchClasses();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "education" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><GraduationCap className="w-3.5 h-3.5" /> Education</button>
+            
+            {/* NEW REGISTRATIONS TAB */}
+            <button onClick={() => {setActiveTab("registrations"); fetchRegistrations();}} className={`px-4 py-2 border transition-colors flex items-center gap-1 ${activeTab === "registrations" ? "bg-aminah-gold text-aminah-green border-aminah-gold font-bold" : "bg-transparent text-aminah-ivory border-aminah-gold/30 hover:border-aminah-gold"}`}><Users className="w-3.5 h-3.5" /> Class Reg</button>
             
             <button onClick={handleLogout} className="ml-2 text-aminah-gold/70 hover:text-red-500 transition-colors"><LogOut className="w-4 h-4" /></button>
           </div>
         </div>
+
+        {/* --- CLASS REGISTRATIONS TAB CONTENT --- */}
+        {activeTab === "registrations" && (
+          <div className="bg-[#111c19]/60 backdrop-blur-md border border-aminah-gold/20 shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-aminah-gold/10 flex justify-between items-center bg-[#050807]/50">
+              <h2 className="text-xl text-aminah-gold font-serif flex items-center gap-2">
+                <Users className="w-5 h-5" /> Student Registrations
+              </h2>
+              <div className="text-aminah-ivory/60 text-xs font-sans tracking-widest uppercase">
+                Total Apps: {registrations.length}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              {registrations.length === 0 ? (
+                <div className="p-20 text-center text-aminah-ivory/50 font-serif italic">
+                  No one has registered for classes yet.
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#050807] text-aminah-gold/70 text-[10px] font-sans tracking-[0.2em] uppercase">
+                      <th className="p-4 border-b border-aminah-gold/10">Date & Time</th>
+                      <th className="p-4 border-b border-aminah-gold/10">Student Info</th>
+                      <th className="p-4 border-b border-aminah-gold/10">Class Title</th>
+                      <th className="p-4 border-b border-aminah-gold/10">Reference / Notes</th>
+                      <th className="p-4 border-b border-aminah-gold/10 text-center">Payment / Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registrations.map((reg) => (
+                      <tr key={reg.id} className="border-b border-aminah-gold/5 hover:bg-aminah-gold/5 transition-colors">
+                        
+                        <td className="p-4">
+                          <p className="text-aminah-ivory/80 font-sans text-[11px] mb-1">{formatDate(reg.created_at)}</p>
+                        </td>
+                        
+                        <td className="p-4">
+                          <p className="text-aminah-gold font-serif text-sm">{reg.student_name}</p>
+                          <p className="text-aminah-ivory/80 font-sans text-[11px]">{reg.student_phone}</p>
+                          <p className="text-aminah-ivory/50 font-sans text-[10px]">{reg.student_email}</p>
+                          <p className="text-aminah-ivory/40 font-sans text-[10px] truncate max-w-[200px] mt-1">{reg.address}</p>
+                        </td>
+                        
+                        <td className="p-4">
+                          <p className="text-aminah-ivory font-serif text-sm">{reg.class_title}</p>
+                        </td>
+
+                        <td className="p-4">
+                           <p className="text-aminah-ivory/70 font-sans text-xs italic">{reg.reference || "N/A"}</p>
+                        </td>
+                        
+                        <td className="p-4 text-center">
+                          <select 
+                            value={reg.payment_status || 'Pending'}
+                            onChange={(e) => handleRegStatusUpdate(reg.id, e.target.value)}
+                            className={`appearance-none outline-none cursor-pointer border px-4 py-1.5 rounded-full text-[9px] font-sans font-bold tracking-widest uppercase transition-colors text-center shadow-md
+                              ${
+                                reg.payment_status === 'Paid' ? 'bg-green-900/30 text-green-500 border-green-700/50' :
+                                'bg-yellow-900/30 text-yellow-500 border-yellow-700/50' 
+                              }
+                            `}
+                          >
+                            <option value="Pending" className="bg-[#111c19] text-yellow-500">PENDING</option>
+                            <option value="Paid" className="bg-[#111c19] text-green-500">PAID</option>
+                          </select>
+                        </td>
+
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* --- ORDERS TAB CONTENT --- */}
         {activeTab === "orders" && (
@@ -471,18 +473,15 @@ export default function AdminDashboard() {
                   <tbody>
                     {orders.map((order) => (
                       <tr key={order.id} className="border-b border-aminah-gold/5 hover:bg-aminah-gold/5 transition-colors">
-                        
                         <td className="p-4">
                           <p className="text-aminah-ivory font-sans text-xs mb-1">#{order.id.slice(0, 8).toUpperCase()}</p>
                           <p className="text-aminah-ivory/40 font-sans text-[10px]">{formatDate(order.created_at)}</p>
                         </td>
-                        
                         <td className="p-4">
                           <p className="text-aminah-gold font-serif text-sm">{order.customer_name}</p>
                           <p className="text-aminah-ivory/60 font-sans text-xs">{order.customer_phone}</p>
                           <p className="text-aminah-ivory/40 font-sans text-[10px] truncate max-w-[200px]">{order.delivery_address}</p>
                         </td>
-                        
                         <td className="p-4">
                           <div className="flex flex-col gap-1">
                             {order.order_items?.map((item: any, idx: number) => (
@@ -492,12 +491,10 @@ export default function AdminDashboard() {
                             ))}
                           </div>
                         </td>
-                        
                         <td className="p-4">
                           <p className="text-aminah-gold font-sans font-bold text-sm">৳{order.grand_total}</p>
                           <p className="text-aminah-ivory/40 font-sans text-[9px] uppercase tracking-widest">{order.payment_method}</p>
                         </td>
-                        
                         <td className="p-4 text-center">
                           <select 
                             value={order.status || 'pending'}
@@ -517,7 +514,6 @@ export default function AdminDashboard() {
                             <option value="cancelled" className="bg-[#111c19] text-red-500">CANCELLED</option>
                           </select>
                         </td>
-
                       </tr>
                     ))}
                   </tbody>
@@ -544,12 +540,10 @@ export default function AdminDashboard() {
               {activeTab === "books" && (
                 <form onSubmit={handleSaveBook} className="space-y-5 font-sans">
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Book Title</label><input type="text" required value={bookTitle} onChange={(e) => setBookTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={bookAuthor} onChange={(e) => setBookAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
                     <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Publisher</label><input type="text" required value={bookPublisher} onChange={(e) => setBookPublisher(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
                   </div>
-
                   <div>
                     <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Cover Image</label>
                     <div className="flex gap-2">
@@ -561,27 +555,20 @@ export default function AdminDashboard() {
                     </div>
                     {bookImage && <img src={bookImage} alt="Preview" className="h-24 object-cover mt-2 border border-aminah-gold/30" />}
                   </div>
-
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Description</label><textarea value={bookDesc} onChange={(e) => setBookDesc(e.target.value)} rows={3} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Price (৳)</label><input type="number" required value={bookPrice} onChange={(e) => setBookPrice(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
-                    
                     <div>
                       <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label>
                       <select value={bookCategory} onChange={(e) => setBookCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
-                        {CATEGORIES.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
+                        {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                       </select>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-3 bg-[#0a110f] border border-aminah-gold/20 p-4 mt-2">
                     <input type="checkbox" id="featureBook" checked={bookIsFeatured} onChange={(e) => setBookIsFeatured(e.target.checked)} className="w-4 h-4 accent-aminah-gold cursor-pointer" />
                     <label htmlFor="featureBook" className="text-xs text-aminah-ivory tracking-widest cursor-pointer select-none">Feature on Landing Page</label>
                   </div>
-                  
                   <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
                     {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Book" : "Publish Book"}
                   </button>
@@ -593,12 +580,10 @@ export default function AdminDashboard() {
               {activeTab === "library" && (
                 <form onSubmit={handleSaveLibrary} className="space-y-5 font-sans">
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Document Title</label><input type="text" required value={libTitle} onChange={(e) => setLibTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" /></div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={libAuthor} onChange={(e) => setLibAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
                     <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Publisher</label><input type="text" required value={libPublisher} onChange={(e) => setLibPublisher(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
                   </div>
-
                   <div>
                     <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">PDF Document</label>
                     <div className="flex gap-2">
@@ -610,9 +595,7 @@ export default function AdminDashboard() {
                     </div>
                     {libFileUrl && <p className="text-xs text-aminah-green mt-2">File Ready: {libFileUrl.split('/').pop()}</p>}
                   </div>
-
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Description</label><textarea value={libDesc} onChange={(e) => setLibDesc(e.target.value)} rows={3} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                      <div>
                       <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Access</label>
@@ -621,17 +604,13 @@ export default function AdminDashboard() {
                         <option value="false">Premium</option>
                       </select>
                     </div>
-                    
                     <div>
                       <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Category</label>
                       <select value={libCategory} onChange={(e) => setLibCategory(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold appearance-none cursor-pointer text-sm">
-                        {CATEGORIES.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
+                        {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                       </select>
                     </div>
                   </div>
-                  
                   <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
                     {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Item" : "Publish to Library"}
                   </button>
@@ -643,12 +622,10 @@ export default function AdminDashboard() {
               {activeTab === "journal" && (
                 <form onSubmit={handleSaveArticle} className="space-y-5 font-sans">
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Article Title</label><input type="text" required value={artTitle} onChange={(e) => setArtTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="Enter an engaging title..." /></div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Author Name</label><input type="text" required value={artAuthor} onChange={(e) => setArtAuthor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" /></div>
                     <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Read Time</label><input type="text" required value={artReadTime} onChange={(e) => setArtReadTime(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold text-sm" placeholder="e.g. 5 min" /></div>
                   </div>
-
                   <div>
                     <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Cover Image</label>
                     <div className="flex gap-2">
@@ -660,11 +637,8 @@ export default function AdminDashboard() {
                     </div>
                     {artImage && <img src={artImage} alt="Preview" className="h-24 object-cover mt-2 border border-aminah-gold/30" />}
                   </div>
-
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Short Introduction (Preview)</label><textarea value={artDesc} onChange={(e) => setArtDesc(e.target.value)} rows={2} placeholder="A short catchy summary to show on the explore page..." className="w-full bg-[#0a110f] border border-aminah-gold/20 p-3 text-aminah-ivory focus:outline-none focus:border-aminah-gold"></textarea></div>
-                  
                   <div><label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-2">Full Article Body</label><textarea value={artBody} onChange={(e) => setArtBody(e.target.value)} rows={12} placeholder="Write your full scholarly article here. You can use markdown or plain text spacing..." className="w-full bg-[#0a110f] border border-aminah-gold/20 p-4 text-aminah-ivory focus:outline-none focus:border-aminah-gold font-serif text-sm leading-relaxed"></textarea></div>
-                  
                   <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
                     {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Article" : "Publish Journal"}
                   </button>
@@ -679,7 +653,6 @@ export default function AdminDashboard() {
                     <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Class/Workshop Title</label>
                     <input type="text" required value={eduTitle} onChange={(e) => setEduTitle(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Foundations of Fiqh" />
                   </div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Type</label>
@@ -695,7 +668,6 @@ export default function AdminDashboard() {
                       <input type="text" required value={eduInstructor} onChange={(e) => setEduInstructor(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Sheikh Abdullah" />
                     </div>
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Date / Days</label>
@@ -706,12 +678,10 @@ export default function AdminDashboard() {
                       <input type="text" required value={eduTime} onChange={(e) => setEduTime(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. 4:00 PM - 5:30 PM" />
                     </div>
                   </div>
-
                   <div>
                     <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Location / Zoom Link</label>
                     <input type="text" required value={eduLocation} onChange={(e) => setEduLocation(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Main Auditorium or Zoom Link" />
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Seats Available</label>
@@ -722,7 +692,6 @@ export default function AdminDashboard() {
                       <input type="text" required value={eduFee} onChange={(e) => setEduFee(e.target.value)} className="w-full bg-[#0a110f] border border-aminah-gold/20 p-2.5 text-sm text-aminah-ivory focus:outline-none focus:border-aminah-gold" placeholder="e.g. Free or ৳500" />
                     </div>
                   </div>
-
                   <div>
                     <label className="block text-[10px] text-aminah-gold tracking-[0.2em] uppercase mb-1">Banner Image (Optional)</label>
                     <div className="flex gap-2">
@@ -734,7 +703,6 @@ export default function AdminDashboard() {
                     </div>
                     {eduImage && <img src={eduImage} alt="Preview" className="h-24 object-cover mt-2 border border-aminah-gold/30" />}
                   </div>
-
                   <button type="submit" disabled={adding} className="w-full mt-4 bg-aminah-gold text-aminah-green font-bold tracking-[0.2em] uppercase text-xs py-4 hover:bg-aminah-ivory transition-colors flex justify-center items-center gap-2">
                     {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Update Class" : "Publish Class"}
                   </button>
@@ -755,20 +723,12 @@ export default function AdminDashboard() {
               ) : (
                 <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[800px] scrollbar-hide pr-2">
                   
-                  {/* BOOKS LIST */}
                   {activeTab === "books" && books.map((book) => (
                     <div key={book.id} className={`bg-[#0a110f] border p-4 transition-colors flex justify-between items-center group ${book.is_featured ? 'border-aminah-gold/60 bg-[#111c19]/50 shadow-md' : 'border-aminah-gold/10 hover:border-aminah-gold/40'}`}>
                       <div className="flex items-center gap-4">
-                        {book.image_url ? (
-                           <img src={book.image_url} alt="cover" className="w-12 h-16 object-cover border border-aminah-gold/30" />
-                        ) : (
-                           <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>
-                        )}
+                        {book.image_url ? <img src={book.image_url} alt="cover" className="w-12 h-16 object-cover border border-aminah-gold/30" /> : <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>}
                         <div>
-                          <h3 className="text-lg text-aminah-ivory flex items-center gap-2">
-                            {book.title}
-                            {book.is_featured && <Star className="w-4 h-4 text-aminah-gold fill-aminah-gold" />}
-                          </h3>
+                          <h3 className="text-lg text-aminah-ivory flex items-center gap-2">{book.title}{book.is_featured && <Star className="w-4 h-4 text-aminah-gold fill-aminah-gold" />}</h3>
                           <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {book.author || "Unknown"} | {book.publisher || "N/A"}</p>
                           <p className="text-[10px] font-sans tracking-widest uppercase text-aminah-gold mt-1 mb-2">{book.format} | {book.category}</p>
                           <p className="text-aminah-ivory font-sans bg-aminah-green px-3 py-1 text-xs border border-aminah-gold/20 inline-block">৳ {book.price}</p>
@@ -781,13 +741,10 @@ export default function AdminDashboard() {
                     </div>
                   ))}
 
-                  {/* LIBRARY LIST */}
                   {activeTab === "library" && libraryItems.map((item) => (
                     <div key={item.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-center group">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center">
-                          <FileText className="w-6 h-6 text-aminah-gold/50" />
-                        </div>
+                        <div className="w-12 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center"><FileText className="w-6 h-6 text-aminah-gold/50" /></div>
                         <div>
                           <h3 className="text-lg text-aminah-ivory">{item.title}</h3>
                           <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {item.author || "Unknown"} | {item.publisher || "N/A"}</p>
@@ -802,15 +759,10 @@ export default function AdminDashboard() {
                     </div>
                   ))}
 
-                  {/* JOURNAL LIST */}
                   {activeTab === "journal" && articles.map((article) => (
                     <div key={article.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-start group">
                       <div className="flex gap-4">
-                        {article.image_url ? (
-                           <img src={article.image_url} alt="cover" className="w-20 h-16 object-cover border border-aminah-gold/30" />
-                        ) : (
-                           <div className="w-20 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>
-                        )}
+                        {article.image_url ? <img src={article.image_url} alt="cover" className="w-20 h-16 object-cover border border-aminah-gold/30" /> : <div className="w-20 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>}
                         <div>
                           <h3 className="text-lg text-aminah-ivory line-clamp-1">{article.title}</h3>
                           <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {article.author} • {formatDate(article.created_at)}</p>
@@ -825,15 +777,10 @@ export default function AdminDashboard() {
                     </div>
                   ))}
 
-                  {/* EDUCATION (CLASSES) LIST ADDED HERE */}
                   {activeTab === "education" && classes.map((cls) => (
                     <div key={cls.id} className="bg-[#0a110f] border border-aminah-gold/10 p-4 hover:border-aminah-gold/40 transition-colors flex justify-between items-start group">
                       <div className="flex gap-4">
-                        {cls.image_url ? (
-                           <img src={cls.image_url} alt="cover" className="w-20 h-16 object-cover border border-aminah-gold/30" />
-                        ) : (
-                           <div className="w-20 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>
-                        )}
+                        {cls.image_url ? <img src={cls.image_url} alt="cover" className="w-20 h-16 object-cover border border-aminah-gold/30" /> : <div className="w-20 h-16 bg-aminah-gold/5 border border-aminah-gold/20 flex items-center justify-center text-aminah-gold/30 text-xs">No Img</div>}
                         <div>
                           <h3 className="text-lg text-aminah-ivory line-clamp-1">{cls.title}</h3>
                           <p className="text-aminah-ivory/50 font-serif italic text-xs mb-1">by {cls.instructor} • {cls.type}</p>
@@ -847,10 +794,6 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
-
-                  {activeTab === "education" && classes.length === 0 && (
-                    <div className="p-10 text-center text-aminah-ivory/40 italic">No classes or workshops found. Publish your first one!</div>
-                  )}
 
                 </div>
               )}
