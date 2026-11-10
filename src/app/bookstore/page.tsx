@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Book, Search, Loader2, Star } from "lucide-react";
-import AddToCartButton from "@/components/AddToCartButton"; // CONNECTED ADD TO CART BUTTON
+import AddToCartButton from "@/components/AddToCartButton";
 
 const CATEGORIES = [
   "All", "Qur’an & Mushaf", "Tafsir (Exegesis)", "Hadith", "Aqeedah (Islamic Creed)", 
@@ -151,14 +151,11 @@ export default function Bookstore() {
                   <p className="text-aminah-ivory/50 font-serif italic text-sm mb-1">By {book.author || "Aminah Institute"}</p>
                   <p className="text-aminah-gold/40 font-sans tracking-widest text-[9px] uppercase mb-6">Pub: {book.publisher || "AMINAH Publications"}</p>
                   
-                  {/* REPLACED WITH FUNCTIONAL ADD TO CART BUTTON (Minimal Style version) */}
                   <div className="mt-auto flex items-center justify-between border-t border-aminah-gold/10 pt-5">
-                    <p className="text-aminah-gold font-sans tracking-widest text-lg font-light">৳{book.price}</p>
+                    <p className="text-aminah-gold font-sans tracking-widest text-lg font-light shrink-0">৳{book.price}</p>
                     
-                    <div className="w-12 h-12">
-                      {/* We use our main component but styled for grid */}
-                      <AddToCartButton book={book} />
-                    </div>
+                    {/* Removed fixed wrapper, button will now size itself naturally */}
+                    <AddToCartButton book={book} />
                   </div>
                 </div>
 

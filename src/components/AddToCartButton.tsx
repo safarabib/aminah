@@ -6,7 +6,9 @@ import { useCart } from "@/context/CartContext";
 export default function AddToCartButton({ book }: { book: any }) {
   const { addToCart } = useCart();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault(); 
+    e.stopPropagation(); 
     addToCart({
       id: book.id,
       title: book.title,
@@ -20,11 +22,15 @@ export default function AddToCartButton({ book }: { book: any }) {
   return (
     <button 
       onClick={handleAddToCart}
-      className="relative inline-flex items-center justify-center w-full sm:w-auto px-6 sm:px-12 py-4 sm:py-5 text-[10px] sm:text-xs font-sans font-bold tracking-[0.2em] uppercase text-[#0a110f] overflow-hidden bg-aminah-gold group transition-all duration-700 shadow-[0_0_40px_rgba(197,164,109,0.3)] hover:shadow-[0_0_60px_rgba(197,164,109,0.5)] hover:-translate-y-1 whitespace-nowrap"
+      title="Add to Cart"
+      className="relative flex items-center justify-center px-4 py-3 min-w-[48px] text-[10px] font-sans font-bold tracking-widest uppercase text-[#0a110f] overflow-hidden bg-aminah-gold group transition-all duration-300 shadow-md hover:shadow-[0_0_20px_rgba(197,164,109,0.3)] hover:-translate-y-0.5 rounded-sm"
     >
       <span className="absolute inset-0 w-full h-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out"></span>
-      <span className="relative z-10 flex items-center gap-2 sm:gap-3">
-        <ShoppingCart className="w-4 h-4 shrink-0" /> Add to Cart
+      
+      <span className="relative z-10 flex items-center justify-center gap-2 whitespace-nowrap">
+        <ShoppingCart className="w-4 h-4 shrink-0" />
+        {/* Hides text on small screens, shows on larger ones */}
+        <span className="hidden sm:inline">Add to Cart</span>
       </span>
     </button>
   );
