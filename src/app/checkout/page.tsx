@@ -7,7 +7,8 @@ import { ArrowLeft, ShieldCheck, Truck, Lock, CreditCard, ShoppingBag, Loader2 }
 import { supabase } from "@/lib/supabase"; // SUPABASE CONNECTED
 
 export default function CheckoutPage() {
-  const { cartItems, cartTotal } = useCart();
+  // FIXED: Added clearCart from useCart
+  const { cartItems, cartTotal, clearCart } = useCart();
   
   // States for Form and Order
   const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -49,8 +50,8 @@ export default function CheckoutPage() {
       alert("Something went wrong. Please try again.");
       setIsSubmitting(false);
     } else {
-      // 4. Success! Clear Cart and show Thank You screen
-      localStorage.removeItem("aminah_cart");
+      // 4. Success! Clear Cart via Context and show Thank You screen
+      clearCart(); // <--- FIXED: Now safely clears the cart globally
       setOrderSuccess(true);
       setIsSubmitting(false);
     }
